@@ -7,7 +7,7 @@ import 'package:tailor_khata/core/time/clock.dart';
 String formatStoredDate(String ymd, String languageCode) {
   try {
     final date = Clock.parseDate(ymd);
-    final text = DateFormat.yMMMd(languageCode).format(date);
+    final text = DateFormat('d MMM y', languageCode).format(date);
     return DigitFormatter.format(text, bangla: languageCode == 'bn');
   } on FormatException {
     return ymd;

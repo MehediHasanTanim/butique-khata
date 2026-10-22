@@ -6,6 +6,27 @@ class SchemaExtras {
   /// Statements applied when schema v2 is created or migrated to.
   static const List<String> v2 = [..._fts, ..._appendOnly];
 
+  /// Statements applied when schema v3 is created or migrated to.
+  static const List<String> v3 = [
+    // Total / paid per order. Due = total - paid is derived here, never
+    // stored, so it cannot drift out of sync with payments (TD §4.3).
+    '''
+CREATE VIEW IF NOT EXISTS v_order_money AS
+SELECT o.id AS order_id,
+       COALESCE((SELECT SUM(i.price) FROM order_item i WHERE i.order_id = o.id), 0)
+         - o.discount AS total,
+       COALESCE((SELECT SUM(p.amount) FROM payment p WHERE p.order_id = o.id), 0)
+         AS paid
+FROM customer_order o''',
+    // Payments are immutable: corrections are new rows.
+    '''
+CREATE TRIGGER IF NOT EXISTS trg_payment_no_update BEFORE UPDATE ON payment
+BEGIN SELECT RAISE(ABORT, 'payment is immutable'); END''',
+    '''
+CREATE TRIGGER IF NOT EXISTS trg_payment_no_delete BEFORE DELETE ON payment
+BEGIN SELECT RAISE(ABORT, 'payment is immutable'); END''',
+  ];
+
   static const List<String> _fts = [
     // `categories` includes M* so Bangla vowel signs stay inside a token.
     '''

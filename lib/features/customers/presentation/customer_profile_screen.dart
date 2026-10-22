@@ -4,13 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'package:tailor_khata/app/providers.dart';
 import 'package:tailor_khata/app/routes.dart';
 import 'package:tailor_khata/core/l10n/digit_formatter.dart';
+import 'package:tailor_khata/core/money/money.dart';
 import 'package:tailor_khata/core/time/date_format.dart';
 import 'package:tailor_khata/core/ui/empty_state.dart';
+import 'package:tailor_khata/core/ui/money_text.dart';
 import 'package:tailor_khata/core/ui/primary_button.dart';
 import 'package:tailor_khata/features/customers/domain/customer.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_providers.dart';
 import 'package:tailor_khata/features/measurements/domain/measurement.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_providers.dart';
+import 'package:tailor_khata/features/orders/presentation/order_providers.dart';
+import 'package:tailor_khata/features/orders/presentation/order_tile.dart';
 import 'package:tailor_khata/l10n/gen/app_localizations.dart';
 
 /// Customer header plus tabs: Overview, Measurements, Orders, Payments (C-3).
@@ -70,16 +74,8 @@ class CustomerProfileScreen extends ConsumerWidget {
               children: [
                 _OverviewTab(customer: value),
                 _MeasurementsTab(customer: value),
-                EmptyState(
-                  icon: Icons.receipt_long_outlined,
-                  title: l10n.tabOrders,
-                  body: l10n.ordersTabEmpty,
-                ),
-                EmptyState(
-                  icon: Icons.payments_outlined,
-                  title: l10n.tabPayments,
-                  body: l10n.paymentsTabEmpty,
-                ),
+                _OrdersTab(customer: value),
+                _PaymentsTab(customer: value),
               ],
             ),
           ),
@@ -330,6 +326,119 @@ class _MeasurementCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _OrdersTab extends ConsumerWidget {
+  const _OrdersTab({required this.customer});
+
+  final Customer customer;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppL10n.of(context);
+    final orders = ref.watch(
+      orderSummariesProvider((customerId: customer.id, openOnly: false)),
+    );
+    return Column(
+      children: [
+        Expanded(
+          child: orders.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, _) => Center(child: Text(l10n.errorGenericTitle)),
+            data: (list) => list.isEmpty
+                ? EmptyState(
+                    icon: Icons.receipt_long_outlined,
+                    title: l10n.ordersEmptyTitle,
+                    body: l10n.ordersTabEmpty,
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.only(top: 8),
+                    itemCount: list.length,
+                    itemBuilder: (context, i) =>
+                        OrderTile(summary: list[i], showCustomer: false),
+                  ),
+          ),
+        ),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: PrimaryButton(
+              key: const ValueKey('profile-new-order'),
+              label: l10n.newOrder,
+              icon: Icons.add,
+              onPressed: () => context.push(AppRoutes.newOrder(customer.id)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Money owed by this customer, with the orders that still have a balance.
+class _PaymentsTab extends ConsumerWidget {
+  const _PaymentsTab({required this.customer});
+
+  final Customer customer;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppL10n.of(context);
+    final theme = Theme.of(context);
+    final due = ref.watch(customerDueProvider(customer.id)).value ?? Money.zero;
+    final orders =
+        ref
+            .watch(
+              orderSummariesProvider((
+                customerId: customer.id,
+                openOnly: false,
+              )),
+            )
+            .value ??
+        const [];
+    final owing = orders
+        .where((o) => !o.order.isCancelled && o.money.hasDue)
+        .toList();
+    return ListView(
+      padding: const EdgeInsets.only(top: 8),
+      children: [
+        Card(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.customerDueLabel,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                MoneyText(
+                  due,
+                  key: const ValueKey('customer-due'),
+                  highlightDue: true,
+                  style: theme.textTheme.headlineSmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (owing.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              l10n.paymentsTabEmpty,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium,
+            ),
+          )
+        else
+          for (final o in owing) OrderTile(summary: o, showCustomer: false),
+      ],
     );
   }
 }

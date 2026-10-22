@@ -282,5 +282,221 @@
   "actionYesSave": "Yes, save",
   "noChangeSaved": "No changes: these are already your latest measurements",
   "tapToSee": "Tap for details",
-  "versionLabelLatest": "Latest"
+  "versionLabelLatest": "Latest",
+  "ordersTabOrders": "Orders",
+  "ordersTabDues": "Dues",
+  "openOnly": "Open only",
+  "newOrder": "New order",
+  "pickCustomer": "Choose customer",
+  "orderNumber": "Order #{n}",
+  "@orderNumber": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "deliveryOn": "Delivery {date}",
+  "@deliveryOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "itemsCount": "{count} items",
+  "@itemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dueAmount": "Due {amount}",
+  "@dueAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paidInFull": "Paid in full",
+  "cancelledBadge": "Cancelled",
+  "urgentBadge": "Urgent",
+  "noDuesTitle": "Nobody owes you money",
+  "noDuesBody": "Customers with a balance will be listed here.",
+  "duesSince": "{count} orders · since {date}",
+  "@duesSince": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "sortByAmount": "By amount",
+  "sortByAge": "By age",
+  "totalOutstanding": "Total outstanding",
+  "customerDueLabel": "Total due",
+  "wizardStepOf": "Step {n} of {total}",
+  "@wizardStepOf": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "stepGarments": "Garments",
+  "stepMeasurements": "Measurements",
+  "stepDetails": "Details & price",
+  "stepDelivery": "Delivery & payment",
+  "addGarment": "Add garment",
+  "quantity": "Quantity",
+  "removeItem": "Remove",
+  "needGarment": "Add at least one garment",
+  "useExisting": "No change — use these",
+  "editMeasurements": "Edit",
+  "takeNow": "Take measurements",
+  "noMeasurementsYet": "No measurements yet. You can add them later.",
+  "measurementsUsed": "Using version {n}",
+  "@measurementsUsed": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hasChanged": "Has anything changed?",
+  "fabricLabel": "Fabric",
+  "fabricShop": "Shop fabric",
+  "fabricCustomer": "Customer’s fabric",
+  "colourLabel": "Colour",
+  "itemNoteLabel": "Note for this garment",
+  "priceLabel": "Price (৳)",
+  "priceRequired": "Enter a price for every garment",
+  "deliveryDateLabel": "Delivery date",
+  "trialDateLabel": "Trial date (optional)",
+  "notSet": "Not set",
+  "urgentLabel": "Urgent",
+  "discountLabel": "Discount (৳)",
+  "advanceLabel": "Advance (৳)",
+  "paidByLabel": "Paid by",
+  "orderNoteLabel": "Order note",
+  "subtotalLabel": "Subtotal",
+  "totalLabel": "Total",
+  "advanceShort": "Advance",
+  "dueShort": "Due",
+  "saveOrder": "Save order",
+  "stepNext": "Next",
+  "stepBack": "Back",
+  "errAdvanceTooMuch": "Advance is more than the total",
+  "errDiscountTooBig": "Discount is more than the price",
+  "errInvalidAmount": "Enter a valid amount",
+  "orderSaved": "Order saved",
+  "discardOrderTitle": "Discard this order?",
+  "discardOrderBody": "Nothing has been saved yet.",
+  "methodCash": "Cash",
+  "methodBkash": "bKash",
+  "methodNagad": "Nagad",
+  "methodBank": "Bank",
+  "methodOther": "Other",
+  "orderDetailTitle": "Order",
+  "statusLabel": "Status",
+  "moveTo": "Move to {status}",
+  "@moveTo": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "setStatus": "Set status",
+  "setAllItems": "Set all garments to…",
+  "paymentsHeader": "Payments",
+  "addPayment": "Add payment",
+  "collectDue": "Collect due",
+  "recordRefund": "Record refund",
+  "paymentAmount": "Amount (৳)",
+  "paymentNote": "Note (optional)",
+  "paymentKindAdvance": "Advance",
+  "paymentKindPayment": "Payment",
+  "paymentKindRefund": "Refund",
+  "paymentKindAdjustment": "Adjustment",
+  "noPayments": "No payments yet",
+  "creditLabel": "Credit {amount}",
+  "@creditLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "changeLog": "Change log",
+  "duplicateOrder": "Duplicate order",
+  "cancelOrder": "Cancel order",
+  "cancelReasonLabel": "Reason",
+  "cancelPaidNote": "{amount} was already paid. What should happen to it?",
+  "@cancelPaidNote": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelRefund": "Refund it",
+  "cancelKeep": "Keep it",
+  "cancelConfirm": "Cancel order",
+  "editDetails": "Change delivery",
+  "snapshotTitle": "Measurements used",
+  "snapshotNone": "No measurements linked",
+  "trialOn": "Trial {date}",
+  "@trialOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "orderNotFound": "This order was not found",
+  "logCreated": "Order created",
+  "logItemStatus": "Garment moved: {detail}",
+  "@logItemStatus": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "logDetails": "Changed: {detail}",
+  "@logDetails": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "logPayment": "Payment: {detail}",
+  "@logPayment": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "logCancelled": "Cancelled: {detail}",
+  "@logCancelled": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "actionAdd": "Add",
+  "actionClose": "Close",
+  "creditShort": "Credit"
 }

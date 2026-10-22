@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:tailor_khata/core/db/schema_extras.dart';
 import 'package:tailor_khata/core/db/tables/customer_tables.dart';
 import 'package:tailor_khata/core/db/tables/measurement_tables.dart';
+import 'package:tailor_khata/core/db/tables/order_tables.dart';
 import 'package:tailor_khata/core/db/template_seeder.dart';
 
 part 'app_database.g.dart';
@@ -36,13 +37,17 @@ class AuditLog extends Table {
     MeasurementField,
     MeasurementSet,
     MeasurementValue,
+    Worker,
+    CustomerOrder,
+    OrderItem,
+    Payment,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   /// Bump together with a new `fromXToY` step in [migration] (TD §9).
-  static const int currentSchemaVersion = 2;
+  static const int currentSchemaVersion = 3;
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -52,6 +57,7 @@ class AppDatabase extends _$AppDatabase {
     onCreate: (m) async {
       await m.createAll();
       await _applyV2Extras();
+      await _applyV3Extras();
       await seedBuiltInTemplates(this);
     },
     onUpgrade: (m, from, to) async {
@@ -67,6 +73,18 @@ class AppDatabase extends _$AppDatabase {
         await _applyV2Extras();
         await seedBuiltInTemplates(this);
       }
+      if (from < 3) {
+        await m.createTable(worker);
+        await m.createTable(customerOrder);
+        await m.createTable(orderItem);
+        await m.createTable(payment);
+        await m.createIndex(idxOrderDelivery);
+        await m.createIndex(idxOrderCustomer);
+        await m.createIndex(idxItemOrder);
+        await m.createIndex(idxItemStatus);
+        await m.createIndex(idxPaymentOrder);
+        await _applyV3Extras();
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -75,6 +93,12 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> _applyV2Extras() async {
     for (final statement in SchemaExtras.v2) {
+      await customStatement(statement);
+    }
+  }
+
+  Future<void> _applyV3Extras() async {
+    for (final statement in SchemaExtras.v3) {
       await customStatement(statement);
     }
   }

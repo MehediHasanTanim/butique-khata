@@ -20,23 +20,6 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class OrdersScreen extends StatelessWidget {
-  const OrdersScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppL10n.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.ordersTitle)),
-      body: EmptyState(
-        icon: Icons.receipt_long_outlined,
-        title: l10n.ordersEmptyTitle,
-        body: l10n.ordersEmptyBody,
-      ),
-    );
-  }
-}
-
 class RushScreen extends StatelessWidget {
   const RushScreen({super.key});
 

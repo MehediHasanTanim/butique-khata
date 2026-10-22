@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tailor_khata/app/providers.dart';
 import 'package:tailor_khata/core/time/clock.dart';
 import 'package:tailor_khata/core/time/date_format.dart';
+import 'package:tailor_khata/core/ui/text_input_dialog.dart';
 import 'package:tailor_khata/core/units/length.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_providers.dart';
 import 'package:tailor_khata/features/measurements/domain/measurement.dart';
@@ -147,7 +148,11 @@ class _MeasurementEntryScreenState
     };
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
-    context.pop();
+    // Callers such as the order wizard get the id of the version to use.
+    context.pop(switch (outcome) {
+      MeasurementSaved(:final measurement) => measurement.id,
+      MeasurementUnchanged(:final latest) => latest.id,
+    });
   }
 
   /// Asks the tailor to confirm fields that moved a lot since last time
@@ -243,30 +248,14 @@ class _MeasurementEntryScreenState
 
   Future<void> _editNote() async {
     final l10n = AppL10n.of(context);
-    final controller = TextEditingController(text: _note);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.noteLabel),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: 3,
-          decoration: InputDecoration(hintText: l10n.noteHint),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.actionCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: Text(l10n.actionOk),
-          ),
-        ],
-      ),
+    final result = await TextInputDialog.show(
+      context,
+      title: l10n.noteLabel,
+      confirmLabel: l10n.actionOk,
+      cancelLabel: l10n.actionCancel,
+      initialText: _note,
+      hint: l10n.noteHint,
     );
-    controller.dispose();
     if (result != null) setState(() => _note = result);
   }
 

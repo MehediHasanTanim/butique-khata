@@ -5,12 +5,16 @@ import 'package:tailor_khata/app/placeholder_screens.dart';
 import 'package:tailor_khata/app/routes.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_form_screen.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_list_screen.dart';
+import 'package:tailor_khata/features/customers/presentation/customer_picker_screen.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_profile_screen.dart';
 import 'package:tailor_khata/features/dev/seed_screen.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_compare_screen.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_entry_screen.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_history_screen.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_trend_screen.dart';
+import 'package:tailor_khata/features/orders/presentation/new_order_screen.dart';
+import 'package:tailor_khata/features/orders/presentation/order_detail_screen.dart';
+import 'package:tailor_khata/features/orders/presentation/orders_screen.dart';
 import 'package:tailor_khata/features/settings/presentation/more_screen.dart';
 
 export 'package:tailor_khata/app/routes.dart';
@@ -76,6 +80,17 @@ GoRouter buildRouter({String initialLocation = AppRoutes.home}) => GoRouter(
       ],
     ),
     GoRoute(
+      path: AppRoutes.pickCustomer,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const CustomerPickerScreen(),
+    ),
+    GoRoute(
+      path: '/order/:id',
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) =>
+          OrderDetailScreen(orderId: state.pathParameters['id']!),
+    ),
+    GoRoute(
       path: AppRoutes.customerNew,
       parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) => const CustomerFormScreen(),
@@ -116,6 +131,14 @@ GoRouter buildRouter({String initialLocation = AppRoutes.home}) => GoRouter(
           builder: (context, state) => MeasurementTrendScreen(
             customerId: state.pathParameters['id']!,
             garmentKey: state.pathParameters['garment']!,
+          ),
+        ),
+        GoRoute(
+          path: 'order/new',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) => NewOrderScreen(
+            customerId: state.pathParameters['id']!,
+            duplicateOf: state.uri.queryParameters['dup'],
           ),
         ),
         GoRoute(

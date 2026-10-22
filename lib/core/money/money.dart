@@ -12,6 +12,20 @@ class Money implements Comparable<Money> {
 
   static const Money zero = Money(0);
 
+  /// Parses user input such as `1250`, `1,250.50` or `১২৫০` (taka, at most
+  /// two decimals, no sign). Returns null if it is not a valid amount.
+  static Money? tryParse(String input) {
+    final text = DigitFormatter.toLatin(input)
+        .replaceAll(',', '')
+        .replaceAll('৳', '')
+        .trim();
+    final match = RegExp(r'^(\d+)?(?:\.(\d{1,2}))?$').firstMatch(text);
+    if (match == null || text.isEmpty || text == '.') return null;
+    final whole = int.parse(match.group(1) ?? '0');
+    final fraction = (match.group(2) ?? '').padRight(2, '0');
+    return Money(whole * 100 + int.parse(fraction.isEmpty ? '0' : fraction));
+  }
+
   final int poisha;
 
   Money operator +(Money other) => Money(poisha + other.poisha);
@@ -33,6 +47,18 @@ class Money implements Comparable<Money> {
   /// Sums [amounts]; an empty iterable gives [zero].
   static Money sum(Iterable<Money> amounts) =>
       amounts.fold(zero, (total, amount) => total + amount);
+
+  /// Plain text for editing fields: `1350` or `1350.50` (no symbol, no
+  /// grouping), which [tryParse] reads back exactly.
+  String toInputString() {
+    final absolute = poisha.abs();
+    final taka = absolute ~/ 100;
+    final paisa = absolute % 100;
+    final text = paisa == 0
+        ? '$taka'
+        : '$taka.${paisa.toString().padLeft(2, '0')}';
+    return isNegative ? '-$text' : text;
+  }
 
   /// Formats with South Asian (lakh/crore) grouping, e.g. `৳12,34,567`.
   ///

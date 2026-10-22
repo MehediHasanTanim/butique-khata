@@ -30,4 +30,10 @@ abstract class AppRoutes {
 
   static String trend(String customerId, String garmentKey) =>
       '/customer/$customerId/trend/$garmentKey';
+
+  static const pickCustomer = '/pick-customer';
+  static String order(String id) => '/order/$id';
+  static String newOrder(String customerId, {String? duplicateOf}) =>
+      '/customer/$customerId/order/new'
+      '${duplicateOf == null ? '' : '?dup=$duplicateOf'}';
 }
