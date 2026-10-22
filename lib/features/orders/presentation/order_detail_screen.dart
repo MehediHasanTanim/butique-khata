@@ -12,6 +12,8 @@ import 'package:tailor_khata/core/ui/money_text.dart';
 import 'package:tailor_khata/core/ui/primary_button.dart';
 import 'package:tailor_khata/core/ui/section_header.dart';
 import 'package:tailor_khata/core/ui/status_chip.dart';
+import 'package:tailor_khata/features/deliveries/domain/message_templates.dart';
+import 'package:tailor_khata/features/deliveries/presentation/delivery_actions.dart';
 import 'package:tailor_khata/features/measurements/domain/measurement.dart';
 import 'package:tailor_khata/features/measurements/domain/measurement_format.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_providers.dart';
@@ -21,9 +23,10 @@ import 'package:tailor_khata/features/orders/domain/style_catalog.dart';
 import 'package:tailor_khata/features/orders/presentation/order_labels.dart';
 import 'package:tailor_khata/features/orders/presentation/order_providers.dart';
 import 'package:tailor_khata/features/orders/presentation/payment_dialogs.dart';
+import 'package:tailor_khata/features/orders/presentation/photo_widgets.dart';
 import 'package:tailor_khata/l10n/gen/app_localizations.dart';
 
-enum _MenuAction { editDelivery, setAll, duplicate, cancel }
+enum _MenuAction { editDelivery, setAll, message, slip, duplicate, cancel }
 
 /// Everything about one order: items and their progress, the measurements
 /// they were cut from, money, payments and the change log (O-11, P-3).
@@ -74,7 +77,35 @@ class _OrderDetailView extends ConsumerWidget {
   ) async {
     switch (action) {
       case _MenuAction.editDelivery:
-        await showEditDeliveryDialog(context, ref, order);
+        final edit = await showEditDeliveryDialog(context, ref, order);
+        if (edit != null &&
+            edit.deliveryDate != order.deliveryDate &&
+            context.mounted) {
+          // The date moved: offer to tell the customer (D-5).
+          final updated = await ref
+              .read(orderRepositoryProvider)
+              .detail(order.id);
+          if (updated != null && context.mounted) {
+            await showMessageSheet(
+              context,
+              ref,
+              updated,
+              MessageKind.moved,
+              newDate: edit.deliveryDate,
+            );
+          }
+        }
+      case _MenuAction.message:
+        await showMessageSheet(
+          context,
+          ref,
+          detail,
+          detail.money.hasDue && order.status != OrderStatus.ready
+              ? MessageKind.due
+              : MessageKind.ready,
+        );
+      case _MenuAction.slip:
+        await context.push(AppRoutes.slip(order.id));
       case _MenuAction.setAll:
         final to = await showStatusPicker(context, null);
         if (to != null) {
@@ -122,6 +153,14 @@ class _OrderDetailView extends ConsumerWidget {
                   child: Text(l10n.setAllItems),
                 ),
               PopupMenuItem(
+                value: _MenuAction.message,
+                child: Text(l10n.sendMessage),
+              ),
+              PopupMenuItem(
+                value: _MenuAction.slip,
+                child: Text(l10n.slipTitle),
+              ),
+              PopupMenuItem(
                 value: _MenuAction.duplicate,
                 child: Text(l10n.duplicateOrder),
               ),
@@ -134,6 +173,7 @@ class _OrderDetailView extends ConsumerWidget {
           ),
         ],
       ),
+      bottomNavigationBar: _ActionBar(detail: detail),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 32),
         children: [
@@ -207,6 +247,7 @@ class _OrderDetailView extends ConsumerWidget {
           for (final item in detail.items)
             _ItemCard(
               key: ValueKey('item-${item.id}'),
+              detail: detail,
               item: item,
               garment: garments
                   .where((g) => g.id == item.garmentTypeId)
@@ -272,12 +313,14 @@ class _OrderDetailView extends ConsumerWidget {
 
 class _ItemCard extends ConsumerWidget {
   const _ItemCard({
+    required this.detail,
     required this.item,
     required this.garment,
     required this.editable,
     super.key,
   });
 
+  final OrderDetail detail;
   final OrderItem item;
   final GarmentInfo? garment;
   final bool editable;
@@ -350,10 +393,14 @@ class _ItemCard extends ConsumerWidget {
                             context,
                             item.status,
                           );
-                          if (to != null) {
-                            await ref
-                                .read(orderRepositoryProvider)
-                                .setItemStatus(item.id, to);
+                          if (to != null && context.mounted) {
+                            await moveItemGuarded(
+                              context,
+                              ref,
+                              detail,
+                              item,
+                              to,
+                            );
                           }
                         }
                       : null,
@@ -365,9 +412,8 @@ class _ItemCard extends ConsumerWidget {
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(48, 48),
                     ),
-                    onPressed: () => ref
-                        .read(orderRepositoryProvider)
-                        .setItemStatus(item.id, next),
+                    onPressed: () =>
+                        moveItemGuarded(context, ref, detail, item, next),
                     child: Text(l10n.moveTo(next.label(l10n))),
                   ),
               ],
@@ -382,6 +428,7 @@ class _ItemCard extends ConsumerWidget {
                   label: Text(l10n.snapshotTitle),
                 ),
               ),
+            ItemPhotosSection(itemId: item.id, editable: editable),
           ],
         ),
       ),
@@ -575,5 +622,48 @@ class _ChangeLog extends ConsumerWidget {
       out = out.replaceAll(s.dbValue, s.label(l10n));
     }
     return out;
+  }
+}
+
+/// Main next step for the order: mark it ready, then hand it over (D-3, P-4).
+class _ActionBar extends ConsumerWidget {
+  const _ActionBar({required this.detail});
+
+  final OrderDetail detail;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppL10n.of(context);
+    final order = detail.order;
+    if (!order.isOpen) return const SizedBox.shrink();
+    final ready = order.status == OrderStatus.ready;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: PrimaryButton(
+          key: ValueKey(ready ? 'action-deliver' : 'action-ready'),
+          label: ready ? l10n.deliverOrder : l10n.markReady,
+          icon: ready
+              ? Icons.local_shipping_outlined
+              : Icons.check_circle_outline,
+          onPressed: () async {
+            if (ready) {
+              await runDeliverFlow(context, ref, detail);
+              return;
+            }
+            await ref
+                .read(orderRepositoryProvider)
+                .setAllItemsStatus(order.id, OrderStatus.ready);
+            if (!context.mounted) return;
+            final updated = await ref
+                .read(orderRepositoryProvider)
+                .detail(order.id);
+            if (updated != null && context.mounted) {
+              await showMessageSheet(context, ref, updated, MessageKind.ready);
+            }
+          },
+        ),
+      ),
+    );
   }
 }

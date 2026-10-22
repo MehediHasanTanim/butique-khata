@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:tailor_khata/core/db/schema_extras.dart';
+import 'package:tailor_khata/core/db/tables/attachment_tables.dart';
 import 'package:tailor_khata/core/db/tables/customer_tables.dart';
 import 'package:tailor_khata/core/db/tables/measurement_tables.dart';
 import 'package:tailor_khata/core/db/tables/order_tables.dart';
@@ -41,13 +42,14 @@ class AuditLog extends Table {
     CustomerOrder,
     OrderItem,
     Payment,
+    Attachment,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   /// Bump together with a new `fromXToY` step in [migration] (TD §9).
-  static const int currentSchemaVersion = 3;
+  static const int currentSchemaVersion = 4;
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -84,6 +86,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createIndex(idxItemStatus);
         await m.createIndex(idxPaymentOrder);
         await _applyV3Extras();
+      }
+      if (from < 4) {
+        await m.createTable(attachment);
+        await m.createIndex(idxAttachmentOwner);
       }
     },
     beforeOpen: (details) async {

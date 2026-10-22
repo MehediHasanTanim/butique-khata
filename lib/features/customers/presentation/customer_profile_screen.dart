@@ -339,7 +339,11 @@ class _OrdersTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppL10n.of(context);
     final orders = ref.watch(
-      orderSummariesProvider((customerId: customer.id, openOnly: false)),
+      orderSummariesProvider((
+        customerId: customer.id,
+        openOnly: false,
+        filter: null,
+      )),
     );
     return Column(
       children: [
@@ -395,6 +399,7 @@ class _PaymentsTab extends ConsumerWidget {
               orderSummariesProvider((
                 customerId: customer.id,
                 openOnly: false,
+                filter: null,
               )),
             )
             .value ??

@@ -275,97 +275,153 @@ class _CancelDialogState extends ConsumerState<_CancelDialog> {
   }
 }
 
-/// Change delivery date, trial date and urgency, recorded in the change log.
-Future<void> showEditDeliveryDialog(
+/// Result of the "change delivery" dialog.
+class DeliveryEdit {
+  const DeliveryEdit({
+    required this.deliveryDate,
+    required this.trialDate,
+    required this.urgent,
+    required this.reason,
+  });
+
+  final String deliveryDate;
+  final String? trialDate;
+  final bool urgent;
+  final String reason;
+}
+
+/// Change delivery date, trial date and urgency, recorded in the change log
+/// with an optional reason (O-11, D-5). Returns the saved edit, or null.
+Future<DeliveryEdit?> showEditDeliveryDialog(
   BuildContext context,
   WidgetRef ref,
   Order order,
 ) async {
-  final l10n = AppL10n.of(context);
-  final lang = Localizations.localeOf(context).languageCode;
-  var delivery = order.deliveryDate;
-  String? trial = order.trialDate;
-  var urgent = order.urgent;
+  final edit = await showDialog<DeliveryEdit>(
+    context: context,
+    builder: (_) =>
+        _EditDeliveryDialog(order: order, now: ref.read(clockProvider).now()),
+  );
+  if (edit != null) {
+    await ref
+        .read(orderRepositoryProvider)
+        .updateDetails(
+          order.id,
+          deliveryDate: edit.deliveryDate,
+          trialDate: edit.trialDate,
+          clearTrialDate: edit.trialDate == null,
+          urgent: edit.urgent,
+          reason: edit.reason,
+        );
+  }
+  return edit;
+}
 
-  Future<String?> pick(BuildContext context, String initial) async {
-    final now = ref.read(clockProvider).now();
-    final current = Clock.parseDate(initial);
+class _EditDeliveryDialog extends StatefulWidget {
+  const _EditDeliveryDialog({required this.order, required this.now});
+
+  final Order order;
+  final DateTime now;
+
+  @override
+  State<_EditDeliveryDialog> createState() => _EditDeliveryDialogState();
+}
+
+class _EditDeliveryDialogState extends State<_EditDeliveryDialog> {
+  late String _delivery = widget.order.deliveryDate;
+  late String? _trial = widget.order.trialDate;
+  late bool _urgent = widget.order.urgent;
+  final _reason = TextEditingController();
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
+
+  Future<String?> _pick(String initial) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: current,
-      firstDate: DateTime(now.year - 1),
-      lastDate: DateTime(now.year + 3),
+      initialDate: Clock.parseDate(initial),
+      firstDate: DateTime(widget.now.year - 1),
+      lastDate: DateTime(widget.now.year + 3),
     );
     return picked == null ? null : Clock.toDateString(picked);
   }
 
-  final saved = await showDialog<bool>(
-    context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
-        title: Text(l10n.editDetails),
-        content: Column(
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
+    final moved = _delivery != widget.order.deliveryDate;
+    return AlertDialog(
+      title: Text(l10n.editDetails),
+      content: SingleChildScrollView(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               key: const ValueKey('edit-delivery-date'),
               contentPadding: EdgeInsets.zero,
               title: Text(l10n.deliveryDateLabel),
-              subtitle: Text(formatStoredDate(delivery, lang)),
+              subtitle: Text(formatStoredDate(_delivery, lang)),
               trailing: const Icon(Icons.event),
               onTap: () async {
-                final d = await pick(context, delivery);
-                if (d != null) setState(() => delivery = d);
+                final d = await _pick(_delivery);
+                if (d != null) setState(() => _delivery = d);
               },
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(l10n.trialDateLabel),
               subtitle: Text(
-                trial == null ? l10n.notSet : formatStoredDate(trial!, lang),
+                _trial == null ? l10n.notSet : formatStoredDate(_trial!, lang),
               ),
-              trailing: trial == null
+              trailing: _trial == null
                   ? const Icon(Icons.event)
                   : IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed: () => setState(() => trial = null),
+                      onPressed: () => setState(() => _trial = null),
                     ),
               onTap: () async {
-                final d = await pick(context, trial ?? delivery);
-                if (d != null) setState(() => trial = d);
+                final d = await _pick(_trial ?? _delivery);
+                if (d != null) setState(() => _trial = d);
               },
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(l10n.urgentLabel),
-              value: urgent,
-              onChanged: (v) => setState(() => urgent = v),
+              value: _urgent,
+              onChanged: (v) => setState(() => _urgent = v),
             ),
+            if (moved)
+              TextField(
+                key: const ValueKey('reschedule-reason'),
+                controller: _reason,
+                decoration: InputDecoration(labelText: l10n.rescheduleReason),
+              ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.actionCancel),
-          ),
-          TextButton(
-            key: const ValueKey('edit-delivery-save'),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.actionSave),
-          ),
-        ],
       ),
-    ),
-  );
-  if (saved ?? false) {
-    await ref
-        .read(orderRepositoryProvider)
-        .updateDetails(
-          order.id,
-          deliveryDate: delivery,
-          trialDate: trial,
-          clearTrialDate: trial == null,
-          urgent: urgent,
-        );
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.actionCancel),
+        ),
+        TextButton(
+          key: const ValueKey('edit-delivery-save'),
+          onPressed: () => Navigator.pop(
+            context,
+            DeliveryEdit(
+              deliveryDate: _delivery,
+              trialDate: _trial,
+              urgent: _urgent,
+              reason: _reason.text.trim(),
+            ),
+          ),
+          child: Text(l10n.actionSave),
+        ),
+      ],
+    );
   }
 }

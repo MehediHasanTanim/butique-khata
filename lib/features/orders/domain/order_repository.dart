@@ -1,4 +1,5 @@
 import 'package:tailor_khata/core/money/money.dart';
+import 'package:tailor_khata/features/orders/domain/delivery.dart';
 import 'package:tailor_khata/features/orders/domain/order.dart';
 import 'package:tailor_khata/features/orders/domain/order_status.dart';
 
@@ -16,6 +17,34 @@ abstract class OrderRepository {
   Stream<List<OrderSummary>> watchSummaries({
     String? customerId,
     bool openOnly = false,
+    OrderFilter? filter,
+  });
+
+  /// One page of open orders with a delivery date in `[from, to]`, soonest
+  /// first, starting after [after] (keyset paging, so it stays fast with
+  /// thousands of orders).
+  Future<List<OrderSummary>> deliveriesPage({
+    String? from,
+    String? to,
+    DeliveryCursor? after,
+    int limit = 30,
+  });
+
+  /// Open orders that have been ready since [olderThanMillis] or earlier
+  /// without being collected.
+  Future<List<OrderSummary>> uncollected({required int olderThanMillis});
+
+  Stream<DeliveryCounts> watchDeliveryCounts({
+    required DeliveryBuckets buckets,
+    required int uncollectedBeforeMillis,
+  });
+
+  /// Open orders grouped by delivery date from [fromDate] on, for reminders.
+  Stream<List<DeliveryDay>> watchOpenDeliveryDays();
+
+  Stream<DashboardStats> watchDashboard({
+    required String today,
+    required int startOfTodayMillis,
   });
 
   /// Customers who owe money on non-cancelled orders.
@@ -28,10 +57,31 @@ abstract class OrderRepository {
 
   /// Moves one item and rolls the order status up in the same transaction.
   /// Throws [StateError] for a disallowed move.
-  Future<void> setItemStatus(String itemId, OrderStatus to);
+  ///
+  /// Delivering while the order has a balance throws [DueOutstandingError]
+  /// unless [dueConfirmed] (P-4); prefer [deliverAll].
+  Future<void> setItemStatus(
+    String itemId,
+    OrderStatus to, {
+    bool dueConfirmed = false,
+  });
 
   /// Moves every item that is allowed to move to [to] (bulk update, O-8).
-  Future<void> setAllItemsStatus(String orderId, OrderStatus to);
+  Future<void> setAllItemsStatus(
+    String orderId,
+    OrderStatus to, {
+    bool dueConfirmed = false,
+  });
+
+  /// Hands the whole order over. With [collect] the money is recorded in the
+  /// same transaction, so a failure leaves neither half done.
+  Future<void> deliverAll(
+    String orderId, {
+    Money? collect,
+    PayMethod method = PayMethod.cash,
+    String? paidOn,
+    bool dueConfirmed = false,
+  });
 
   /// Edits delivery details with a change-log entry (O-11).
   Future<void> updateDetails(
@@ -41,6 +91,7 @@ abstract class OrderRepository {
     bool clearTrialDate = false,
     bool? urgent,
     String? note,
+    String? reason,
   });
 
   Future<void> cancel(

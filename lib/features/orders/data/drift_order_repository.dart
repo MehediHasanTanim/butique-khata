@@ -5,7 +5,9 @@ import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'package:tailor_khata/core/db/app_database.dart';
 import 'package:tailor_khata/core/ids/id_generator.dart';
 import 'package:tailor_khata/core/money/money.dart';
+import 'package:tailor_khata/core/text/name_normalizer.dart';
 import 'package:tailor_khata/core/time/clock.dart';
+import 'package:tailor_khata/features/orders/domain/delivery.dart';
 import 'package:tailor_khata/features/orders/domain/order.dart';
 import 'package:tailor_khata/features/orders/domain/order_repository.dart';
 import 'package:tailor_khata/features/orders/domain/order_status.dart';
@@ -114,27 +116,45 @@ class DriftOrderRepository implements OrderRepository {
             updatedAt: now,
           ),
         );
+    final itemIds = [for (final _ in input.items) _ids.newId()];
     await _db.batch((batch) {
       batch.insertAll(_db.orderItem, [
-        for (final item in input.items)
+        for (var i = 0; i < input.items.length; i++)
           OrderItemCompanion.insert(
-            id: _ids.newId(),
+            id: itemIds[i],
             orderId: orderId,
-            garmentTypeId: item.garmentTypeId,
-            qty: Value(item.qty),
-            price: item.price.poisha,
-            measurementSetId: Value(item.measurementSetId),
-            fabricSource: Value(item.fabricSource?.dbValue),
-            colour: Value(item.colour),
+            garmentTypeId: input.items[i].garmentTypeId,
+            qty: Value(input.items[i].qty),
+            price: input.items[i].price.poisha,
+            measurementSetId: Value(input.items[i].measurementSetId),
+            fabricSource: Value(input.items[i].fabricSource?.dbValue),
+            colour: Value(input.items[i].colour),
             styleJson: Value(
-              item.style.isEmpty ? null : jsonEncode(item.style),
+              input.items[i].style.isEmpty
+                  ? null
+                  : jsonEncode(input.items[i].style),
             ),
-            note: Value(item.note),
+            note: Value(input.items[i].note),
             status: OrderStatus.received.dbValue,
             statusChangedAt: now,
-            workUnits: Value(item.workUnits * item.qty),
+            workUnits: Value(input.items[i].workUnits * input.items[i].qty),
           ),
       ]);
+      for (var i = 0; i < input.items.length; i++) {
+        for (final photo in input.items[i].photos) {
+          batch.insert(
+            _db.attachment,
+            AttachmentCompanion.insert(
+              id: _ids.newId(),
+              ownerType: 'order_item',
+              ownerId: itemIds[i],
+              path: photo.path,
+              thumbPath: Value(photo.thumbPath),
+              createdAt: now,
+            ),
+          );
+        }
+      }
     });
     final advance = input.advance;
     if (advance != null && advance.amount.isPositive) {
@@ -203,6 +223,7 @@ class DriftOrderRepository implements OrderRepository {
   Stream<List<OrderSummary>> watchSummaries({
     String? customerId,
     bool openOnly = false,
+    OrderFilter? filter,
   }) {
     final where = <String>['o.deleted_at IS NULL'];
     final vars = <Variable<Object>>[];
@@ -213,41 +234,239 @@ class DriftOrderRepository implements OrderRepository {
     if (openOnly) {
       where.add("o.cancelled_at IS NULL AND o.status != 'delivered'");
     }
+    if (filter != null) _applyFilter(filter, where, vars);
     return _db
         .customSelect(
-          'SELECT o.*, c.name AS customer_name, m.total AS total, '
-          'm.paid AS paid, '
-          '(SELECT COUNT(*) FROM order_item i WHERE i.order_id = o.id) '
-          'AS item_count '
-          'FROM customer_order o '
-          'JOIN customer c ON c.id = o.customer_id '
-          'JOIN v_order_money m ON m.order_id = o.id '
-          'WHERE ${where.join(' AND ')} '
+          '$_summarySelect WHERE ${where.join(' AND ')} '
           'ORDER BY o.delivery_date ASC, o.number ASC',
           variables: vars,
-          readsFrom: {
-            _db.customerOrder,
-            _db.orderItem,
-            _db.payment,
-            _db.customer,
-          },
+          readsFrom: _summaryTables,
         )
         .watch()
-        .map(
-          (rows) => [
-            for (final r in rows)
-              OrderSummary(
-                order: _order(_db.customerOrder.map(r.data)),
-                customerName: r.read<String>('customer_name'),
-                itemCount: r.read<int>('item_count'),
-                money: OrderMoney(
-                  total: Money(r.read<int>('total')),
-                  paid: Money(r.read<int>('paid')),
-                ),
-              ),
-          ],
-        );
+        .map(_mapSummaries);
   }
+
+  static const String _summarySelect =
+      'SELECT o.*, c.name AS customer_name, m.total AS total, '
+      'm.paid AS paid, '
+      '(SELECT COUNT(*) FROM order_item i WHERE i.order_id = o.id) '
+      'AS item_count '
+      'FROM customer_order o '
+      'JOIN customer c ON c.id = o.customer_id '
+      'JOIN v_order_money m ON m.order_id = o.id';
+
+  Set<TableInfo<Table, dynamic>> get _summaryTables => {
+    _db.customerOrder,
+    _db.orderItem,
+    _db.payment,
+    _db.customer,
+  };
+
+  List<OrderSummary> _mapSummaries(List<QueryRow> rows) => [
+    for (final r in rows)
+      OrderSummary(
+        order: _order(_db.customerOrder.map(r.data)),
+        customerName: r.read<String>('customer_name'),
+        itemCount: r.read<int>('item_count'),
+        money: OrderMoney(
+          total: Money(r.read<int>('total')),
+          paid: Money(r.read<int>('paid')),
+        ),
+      ),
+  ];
+
+  void _applyFilter(
+    OrderFilter filter,
+    List<String> where,
+    List<Variable<Object>> vars,
+  ) {
+    final text = NameNormalizer.normalize(filter.query);
+    if (text.isNotEmpty) {
+      final digits = text.replaceAll(RegExp(r'\D'), '');
+      final number = int.tryParse(text.replaceFirst('#', '').trim());
+      final clauses = <String>["c.name_norm LIKE '%' || ? || '%'"];
+      vars.add(Variable<String>(text));
+      if (number != null) {
+        clauses.add('o.number = ?');
+        vars.add(Variable<int>(number));
+      }
+      if (digits.length >= 3) {
+        clauses.add("c.phone_digits LIKE '%' || ? || '%'");
+        vars.add(Variable<String>(digits));
+      }
+      where.add('(${clauses.join(' OR ')})');
+    }
+    if (filter.statuses.isNotEmpty) {
+      where.add(
+        'o.status IN (${List.filled(filter.statuses.length, '?').join(',')})',
+      );
+      for (final status in filter.statuses) {
+        vars.add(Variable<String>(status.dbValue));
+      }
+    }
+    if (filter.dueOnly) {
+      where.add('o.cancelled_at IS NULL AND m.total - m.paid > 0');
+    }
+    if (filter.garmentTypeId != null) {
+      where.add(
+        'EXISTS (SELECT 1 FROM order_item gi WHERE gi.order_id = o.id '
+        'AND gi.garment_type_id = ?)',
+      );
+      vars.add(Variable<String>(filter.garmentTypeId!));
+    }
+    if (filter.from != null) {
+      where.add('o.delivery_date >= ?');
+      vars.add(Variable<String>(filter.from!));
+    }
+    if (filter.to != null) {
+      where.add('o.delivery_date <= ?');
+      vars.add(Variable<String>(filter.to!));
+    }
+  }
+
+  // ---- deliveries / dashboard --------------------------------------------
+
+  static const String _openWhere =
+      "o.deleted_at IS NULL AND o.cancelled_at IS NULL AND o.status != 'delivered'";
+
+  @override
+  Future<List<OrderSummary>> deliveriesPage({
+    String? from,
+    String? to,
+    DeliveryCursor? after,
+    int limit = 30,
+  }) async {
+    final where = <String>[_openWhere];
+    final vars = <Variable<Object>>[];
+    if (from != null) {
+      where.add('o.delivery_date >= ?');
+      vars.add(Variable<String>(from));
+    }
+    if (to != null) {
+      where.add('o.delivery_date <= ?');
+      vars.add(Variable<String>(to));
+    }
+    if (after != null) {
+      where.add('(o.delivery_date, o.number) > (?, ?)');
+      vars
+        ..add(Variable<String>(after.date))
+        ..add(Variable<int>(after.number));
+    }
+    vars.add(Variable<int>(limit));
+    final rows = await _db
+        .customSelect(
+          '$_summarySelect WHERE ${where.join(' AND ')} '
+          'ORDER BY o.delivery_date ASC, o.number ASC LIMIT ?',
+          variables: vars,
+          readsFrom: _summaryTables,
+        )
+        .get();
+    return _mapSummaries(rows);
+  }
+
+  @override
+  Future<List<OrderSummary>> uncollected({required int olderThanMillis}) async {
+    final rows = await _db
+        .customSelect(
+          '$_summarySelect WHERE $_openWhere AND o.status = \'ready\' '
+          'AND (SELECT MAX(i.status_changed_at) FROM order_item i '
+          'WHERE i.order_id = o.id) <= ? '
+          'ORDER BY o.delivery_date ASC, o.number ASC',
+          variables: [Variable<int>(olderThanMillis)],
+          readsFrom: _summaryTables,
+        )
+        .get();
+    return _mapSummaries(rows);
+  }
+
+  @override
+  Stream<DeliveryCounts> watchDeliveryCounts({
+    required DeliveryBuckets buckets,
+    required int uncollectedBeforeMillis,
+  }) => _db
+      .customSelect(
+        'SELECT '
+        'COALESCE(SUM(CASE WHEN o.delivery_date < ? THEN 1 ELSE 0 END), 0) AS overdue, '
+        'COALESCE(SUM(CASE WHEN o.delivery_date = ? THEN 1 ELSE 0 END), 0) AS today, '
+        'COALESCE(SUM(CASE WHEN o.delivery_date = ? THEN 1 ELSE 0 END), 0) AS tomorrow, '
+        'COALESCE(SUM(CASE WHEN o.delivery_date BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) AS week, '
+        "COALESCE(SUM(CASE WHEN o.status = 'ready' AND "
+        '(SELECT MAX(i.status_changed_at) FROM order_item i '
+        'WHERE i.order_id = o.id) <= ? THEN 1 ELSE 0 END), 0) AS uncollected '
+        'FROM customer_order o WHERE $_openWhere',
+        variables: [
+          Variable<String>(buckets.today),
+          Variable<String>(buckets.today),
+          Variable<String>(buckets.tomorrow),
+          Variable<String>(buckets.weekStart),
+          Variable<String>(buckets.weekEnd),
+          Variable<int>(uncollectedBeforeMillis),
+        ],
+        readsFrom: {_db.customerOrder, _db.orderItem},
+      )
+      .watchSingle()
+      .map(
+        (r) => DeliveryCounts(
+          overdue: r.read<int>('overdue'),
+          today: r.read<int>('today'),
+          tomorrow: r.read<int>('tomorrow'),
+          week: r.read<int>('week'),
+          uncollected: r.read<int>('uncollected'),
+        ),
+      );
+
+  @override
+  Stream<List<DeliveryDay>> watchOpenDeliveryDays() => _db
+      .customSelect(
+        'SELECT o.delivery_date AS day, COUNT(*) AS cnt, MIN(o.id) AS first_id '
+        'FROM customer_order o WHERE $_openWhere '
+        'GROUP BY o.delivery_date ORDER BY o.delivery_date',
+        readsFrom: {_db.customerOrder},
+      )
+      .watch()
+      .map(
+        (rows) => [
+          for (final r in rows)
+            DeliveryDay(
+              date: r.read<String>('day'),
+              count: r.read<int>('cnt'),
+              firstOrderId: r.read<String>('first_id'),
+            ),
+        ],
+      );
+
+  @override
+  Stream<DashboardStats> watchDashboard({
+    required String today,
+    required int startOfTodayMillis,
+  }) => _db
+      .customSelect(
+        'SELECT '
+        '(SELECT COUNT(*) FROM customer_order o WHERE $_openWhere '
+        'AND o.delivery_date = ?) AS due_today, '
+        '(SELECT COUNT(*) FROM customer_order o WHERE $_openWhere '
+        'AND o.delivery_date < ?) AS overdue, '
+        '(SELECT COALESCE(SUM($_dueExpr), 0) FROM customer_order o '
+        'JOIN v_order_money m ON m.order_id = o.id '
+        'WHERE o.deleted_at IS NULL AND o.cancelled_at IS NULL) AS total_due, '
+        '(SELECT COUNT(*) FROM customer_order o WHERE o.deleted_at IS NULL '
+        'AND o.created_at >= ?) AS received_today',
+        variables: [
+          Variable<String>(today),
+          Variable<String>(today),
+          Variable<int>(startOfTodayMillis),
+        ],
+        readsFrom: {_db.customerOrder, _db.orderItem, _db.payment},
+      )
+      .watchSingle()
+      .map(
+        (r) => DashboardStats(
+          dueToday: r.read<int>('due_today'),
+          overdue: r.read<int>('overdue'),
+          totalDue: Money(r.read<int>('total_due')),
+          receivedToday: r.read<int>('received_today'),
+        ),
+      );
 
   static const String _dueExpr =
       'CASE WHEN m.total - m.paid > 0 THEN m.total - m.paid ELSE 0 END';
@@ -340,34 +559,97 @@ class DriftOrderRepository implements OrderRepository {
   // ---- status -------------------------------------------------------------
 
   @override
-  Future<void> setItemStatus(String itemId, OrderStatus to) =>
-      _db.transaction(() async {
-        final item = await (_db.select(
-          _db.orderItem,
-        )..where((t) => t.id.equals(itemId))).getSingle();
-        await _requireOpen(item.orderId);
-        final from = OrderStatus.fromDb(item.status);
-        if (!from.canMoveTo(to)) {
-          throw StateError('Cannot move item from $from to $to');
-        }
-        await _moveItem(item, to);
-        await _rollUp(item.orderId);
-      });
+  Future<void> setItemStatus(
+    String itemId,
+    OrderStatus to, {
+    bool dueConfirmed = false,
+  }) => _db.transaction(() async {
+    final item = await (_db.select(
+      _db.orderItem,
+    )..where((t) => t.id.equals(itemId))).getSingle();
+    await _requireOpen(item.orderId);
+    if (to == OrderStatus.delivered && !dueConfirmed) {
+      await _requireNoDue(item.orderId);
+    }
+    final from = OrderStatus.fromDb(item.status);
+    if (!from.canMoveTo(to)) {
+      throw StateError('Cannot move item from $from to $to');
+    }
+    await _moveItem(item, to);
+    await _rollUp(item.orderId);
+  });
 
   @override
-  Future<void> setAllItemsStatus(String orderId, OrderStatus to) =>
-      _db.transaction(() async {
-        await _requireOpen(orderId);
-        final items = await (_db.select(
-          _db.orderItem,
-        )..where((t) => t.orderId.equals(orderId))).get();
-        for (final item in items) {
-          if (OrderStatus.fromDb(item.status).canMoveTo(to)) {
-            await _moveItem(item, to);
-          }
-        }
-        await _rollUp(orderId);
-      });
+  Future<void> setAllItemsStatus(
+    String orderId,
+    OrderStatus to, {
+    bool dueConfirmed = false,
+  }) => _db.transaction(() async {
+    await _requireOpen(orderId);
+    if (to == OrderStatus.delivered && !dueConfirmed) {
+      await _requireNoDue(orderId);
+    }
+    final items = await (_db.select(
+      _db.orderItem,
+    )..where((t) => t.orderId.equals(orderId))).get();
+    for (final item in items) {
+      if (OrderStatus.fromDb(item.status).canMoveTo(to)) {
+        await _moveItem(item, to);
+      }
+    }
+    await _rollUp(orderId);
+  });
+
+  /// Throws [DueOutstandingError] if the order still has a balance (P-4).
+  Future<void> _requireNoDue(String orderId) async {
+    final row = await _db
+        .customSelect(
+          'SELECT total - paid AS due FROM v_order_money WHERE order_id = ?',
+          variables: [Variable<String>(orderId)],
+          readsFrom: {_db.customerOrder, _db.orderItem, _db.payment},
+        )
+        .getSingle();
+    final due = row.read<int>('due');
+    if (due > 0) throw DueOutstandingError(Money(due));
+  }
+
+  @override
+  Future<void> deliverAll(
+    String orderId, {
+    Money? collect,
+    PayMethod method = PayMethod.cash,
+    String? paidOn,
+    bool dueConfirmed = false,
+  }) => _db.transaction(() async {
+    await _requireOpen(orderId);
+    if (collect != null && collect.isPositive) {
+      await _insertPayment(
+        NewPayment(
+          orderId: orderId,
+          amount: collect,
+          method: method,
+          paidOn: paidOn ?? Clock.toDateString(_clock.now()),
+          kind: PaymentKind.payment,
+          note: null,
+        ),
+      );
+      await _audit(
+        orderId,
+        'payment_added',
+        'payment ${collect.format(symbol: false)}',
+      );
+    }
+    if (!dueConfirmed) await _requireNoDue(orderId);
+    final items = await (_db.select(
+      _db.orderItem,
+    )..where((t) => t.orderId.equals(orderId))).get();
+    for (final item in items) {
+      if (item.status != OrderStatus.delivered.dbValue) {
+        await _moveItem(item, OrderStatus.delivered);
+      }
+    }
+    await _rollUp(orderId);
+  });
 
   Future<void> _requireOpen(String orderId) async {
     final order = await (_db.select(
@@ -416,6 +698,7 @@ class DriftOrderRepository implements OrderRepository {
     bool clearTrialDate = false,
     bool? urgent,
     String? note,
+    String? reason,
   }) => _db.transaction(() async {
     await _requireOpen(orderId);
     final row = await (_db.select(
@@ -453,7 +736,10 @@ class DriftOrderRepository implements OrderRepository {
         updatedAt: Value(_clock.now().millisecondsSinceEpoch),
       ),
     );
-    await _audit(orderId, 'details_changed', changes.join('; '));
+    final why = (reason == null || reason.trim().isEmpty)
+        ? ''
+        : ' (${reason.trim()})';
+    await _audit(orderId, 'details_changed', '${changes.join('; ')}$why');
   });
 
   @override

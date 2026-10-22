@@ -33,6 +33,19 @@ class MoreScreen extends ConsumerWidget {
                   controller.setLanguage(value.first),
             ),
           ),
+          SectionHeader(l10n.settingsReminders),
+          AppListTile(
+            title: l10n.settingsReminders,
+            subtitle: l10n.settingsRemindersSubtitle,
+            leading: const Icon(Icons.notifications_outlined),
+            onTap: () => context.push(AppRoutes.settingsReminders),
+          ),
+          AppListTile(
+            title: l10n.settingsMessages,
+            subtitle: l10n.settingsMessagesSubtitle,
+            leading: const Icon(Icons.message_outlined),
+            onTap: () => context.push(AppRoutes.settingsMessages),
+          ),
           if (kDebugMode) ...[
             SectionHeader(l10n.settingsDeveloper),
             AppListTile(

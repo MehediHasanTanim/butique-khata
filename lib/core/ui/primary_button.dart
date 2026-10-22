@@ -15,11 +15,18 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The label may be long (Bangla, large fonts): let it wrap rather than
+    // overflow next to the icon.
+    final text = Text(label, textAlign: TextAlign.center);
     final child = icon == null
-        ? Text(label)
+        ? text
         : Row(
             mainAxisSize: MainAxisSize.min,
-            children: [Icon(icon), const SizedBox(width: 8), Text(label)],
+            children: [
+              Icon(icon),
+              const SizedBox(width: 8),
+              Flexible(child: text),
+            ],
           );
     return SizedBox(
       width: double.infinity,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,13 +10,20 @@ import 'package:tailor_khata/core/money/money.dart';
 import 'package:tailor_khata/core/time/date_format.dart';
 import 'package:tailor_khata/core/ui/empty_state.dart';
 import 'package:tailor_khata/core/ui/money_text.dart';
+import 'package:tailor_khata/features/measurements/presentation/measurement_providers.dart';
+import 'package:tailor_khata/features/orders/domain/delivery.dart';
+import 'package:tailor_khata/features/orders/presentation/order_filter_sheet.dart';
 import 'package:tailor_khata/features/orders/presentation/order_providers.dart';
 import 'package:tailor_khata/features/orders/presentation/order_tile.dart';
 import 'package:tailor_khata/l10n/gen/app_localizations.dart';
 
-/// Orders tab: all orders by delivery date, and who owes what.
+/// Orders tab: all orders by delivery date, with search and filters, and a
+/// Dues tab showing who owes what.
 class OrdersScreen extends ConsumerStatefulWidget {
-  const OrdersScreen({super.key});
+  const OrdersScreen({this.initialTab = 0, super.key});
+
+  /// 0 = orders, 1 = dues.
+  final int initialTab;
 
   @override
   ConsumerState<OrdersScreen> createState() => _OrdersScreenState();
@@ -22,6 +31,7 @@ class OrdersScreen extends ConsumerStatefulWidget {
 
 class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   bool _openOnly = true;
+  OrderFilter _filter = const OrderFilter();
 
   Future<void> _startNewOrder() async {
     final customerId = await context.push<String>(AppRoutes.pickCustomer);
@@ -35,6 +45,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     final l10n = AppL10n.of(context);
     return DefaultTabController(
       length: 2,
+      initialIndex: widget.initialTab,
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.ordersTitle),
@@ -54,7 +65,9 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           children: [
             _OrdersList(
               openOnly: _openOnly,
-              onToggle: (value) => setState(() => _openOnly = value),
+              filter: _filter,
+              onToggleOpen: (value) => setState(() => _openOnly = value),
+              onFilter: (value) => setState(() => _filter = value),
             ),
             const _DuesList(),
           ],
@@ -64,20 +77,99 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   }
 }
 
-class _OrdersList extends ConsumerWidget {
-  const _OrdersList({required this.openOnly, required this.onToggle});
+class _OrdersList extends ConsumerStatefulWidget {
+  const _OrdersList({
+    required this.openOnly,
+    required this.filter,
+    required this.onToggleOpen,
+    required this.onFilter,
+  });
 
   final bool openOnly;
-  final ValueChanged<bool> onToggle;
+  final OrderFilter filter;
+  final ValueChanged<bool> onToggleOpen;
+  final ValueChanged<OrderFilter> onFilter;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_OrdersList> createState() => _OrdersListState();
+}
+
+class _OrdersListState extends ConsumerState<_OrdersList> {
+  final _search = TextEditingController();
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _onSearch(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      if (mounted) widget.onFilter(widget.filter.copyWith(query: value));
+    });
+  }
+
+  Future<void> _openFilters() async {
+    final garments = await ref.read(measurementRepositoryProvider).garments();
+    if (!mounted) return;
+    final result = await showModalBottomSheet<OrderFilter>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) =>
+          OrderFilterSheet(initial: widget.filter, garments: garments),
+    );
+    if (result != null) widget.onFilter(result);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppL10n.of(context);
+    final filter = widget.filter;
+    final active = filter.activeCount;
+    // Searching or filtering looks at every order, not only open ones.
+    final openOnly = widget.openOnly && filter.isEmpty;
     final orders = ref.watch(
-      orderSummariesProvider((customerId: null, openOnly: openOnly)),
+      orderSummariesProvider((
+        customerId: null,
+        openOnly: openOnly,
+        filter: filter.isEmpty ? null : filter,
+      )),
     );
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const ValueKey('order-search'),
+                  controller: _search,
+                  onChanged: _onSearch,
+                  decoration: InputDecoration(
+                    hintText: l10n.orderSearchHint,
+                    prefixIcon: const Icon(Icons.search),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Badge(
+                isLabelVisible: active > 0,
+                label: Text('$active'),
+                child: IconButton.filledTonal(
+                  key: const ValueKey('order-filter-button'),
+                  tooltip: l10n.filterTitle,
+                  icon: const Icon(Icons.tune),
+                  onPressed: _openFilters,
+                ),
+              ),
+            ],
+          ),
+        ),
         Align(
           alignment: AlignmentDirectional.centerStart,
           child: Padding(
@@ -86,7 +178,7 @@ class _OrdersList extends ConsumerWidget {
               key: const ValueKey('filter-open'),
               label: Text(l10n.openOnly),
               selected: openOnly,
-              onSelected: onToggle,
+              onSelected: filter.isEmpty ? widget.onToggleOpen : null,
             ),
           ),
         ),
@@ -96,11 +188,25 @@ class _OrdersList extends ConsumerWidget {
             error: (_, _) => Center(child: Text(l10n.errorGenericTitle)),
             data: (list) {
               if (list.isEmpty) {
-                return EmptyState(
-                  icon: Icons.receipt_long_outlined,
-                  title: l10n.ordersEmptyTitle,
-                  body: l10n.ordersEmptyBody,
-                );
+                return filter.isEmpty
+                    ? EmptyState(
+                        icon: Icons.receipt_long_outlined,
+                        title: l10n.ordersEmptyTitle,
+                        body: l10n.ordersEmptyBody,
+                      )
+                    : EmptyState(
+                        icon: Icons.filter_alt_off_outlined,
+                        title: l10n.filterNoMatch,
+                        body: '',
+                        action: TextButton(
+                          key: const ValueKey('filter-clear-inline'),
+                          onPressed: () {
+                            _search.clear();
+                            widget.onFilter(const OrderFilter());
+                          },
+                          child: Text(l10n.filterClear),
+                        ),
+                      );
               }
               return ListView.builder(
                 padding: const EdgeInsets.only(top: 8, bottom: 96),

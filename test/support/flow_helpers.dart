@@ -4,19 +4,37 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tailor_khata/app/app.dart';
 import 'package:tailor_khata/app/providers.dart';
 import 'package:tailor_khata/app/router.dart';
+import 'package:tailor_khata/app/services.dart';
 import 'package:tailor_khata/core/db/app_database.dart';
 
-/// Full app on [db], optionally starting at route [start].
-Widget appOn(AppDatabase db, {String locale = 'en', String? start}) =>
-    ProviderScope(
-      overrides: [
-        appDatabaseProvider.overrideWithValue(db),
-        initialLocaleCodeProvider.overrideWithValue(locale),
-      ],
-      child: TailorKhataApp(
-        router: start == null ? null : buildRouter(initialLocation: start),
-      ),
-    );
+import 'fakes.dart';
+
+/// Full app on [db], optionally starting at route [start]. Platform
+/// services are fakes held by [env] (a fresh one if not given).
+Widget appOn(
+  AppDatabase db, {
+  String locale = 'en',
+  String? start,
+  TestEnv? env,
+}) {
+  final e = env ?? TestEnv();
+  return ProviderScope(
+    overrides: [
+      appDatabaseProvider.overrideWithValue(db),
+      initialLocaleCodeProvider.overrideWithValue(locale),
+      clockProvider.overrideWithValue(e.clock),
+      initialAppSettingsProvider.overrideWithValue(e.settings),
+      notificationServiceProvider.overrideWithValue(e.notifications),
+      externalLauncherProvider.overrideWithValue(e.launcher),
+      fileSharerProvider.overrideWithValue(e.sharer),
+      photoSourceProvider.overrideWithValue(e.photos),
+      mediaStoreProvider.overrideWithValue(e.media),
+    ],
+    child: TailorKhataApp(
+      router: start == null ? null : buildRouter(initialLocation: start),
+    ),
+  );
+}
 
 void phoneScreen(WidgetTester tester) {
   tester.view.physicalSize = const Size(360, 780) * 3;

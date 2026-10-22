@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:tailor_khata/app/app.dart';
 import 'package:tailor_khata/app/error_boundary.dart';
 import 'package:tailor_khata/app/providers.dart';
+import 'package:tailor_khata/app/services.dart';
 import 'package:tailor_khata/core/db/app_database.dart';
 import 'package:tailor_khata/core/db/database_opener.dart';
 import 'package:tailor_khata/core/errors/result.dart';
 import 'package:tailor_khata/core/logging/app_log.dart';
+import 'package:tailor_khata/core/media/media_store.dart';
+import 'package:tailor_khata/core/services/notification_service.dart';
 import 'package:tailor_khata/core/ui/app_theme.dart';
 import 'package:tailor_khata/core/ui/empty_state.dart';
 import 'package:tailor_khata/core/ui/primary_button.dart';
+import 'package:tailor_khata/features/settings/data/app_settings.dart';
 import 'package:tailor_khata/features/settings/data/settings_repository.dart';
 import 'package:tailor_khata/l10n/gen/app_localizations.dart';
 
@@ -25,14 +30,22 @@ Future<void> bootstrap(Flavor flavor) async {
 
 Future<void> _launch(Flavor flavor) async {
   AppLog.i('boot', 'Starting ${flavor.name}');
+  // Date names for every locale, available before any widget builds.
+  await initializeDateFormatting();
   try {
     final db = await _openDatabase();
     final settings = SettingsRepository(db);
     final saved = await settings.read(SettingKeys.locale);
+    final appSettings = await AppSettings.load(settings);
+    final media = await FileMediaStore.inAppSupport();
+    final notifications = await _startNotifications();
     runApp(
       ProviderScope(
         overrides: [
           appDatabaseProvider.overrideWithValue(db),
+          initialAppSettingsProvider.overrideWithValue(appSettings),
+          mediaStoreProvider.overrideWithValue(media),
+          notificationServiceProvider.overrideWithValue(notifications),
           initialLocaleCodeProvider.overrideWithValue(
             LocaleController.supported.contains(saved) ? saved! : 'en',
           ),
@@ -42,6 +55,18 @@ Future<void> _launch(Flavor flavor) async {
     );
   } on Failure catch (failure) {
     runApp(StartupErrorApp(failure: failure, onRetry: () => _launch(flavor)));
+  }
+}
+
+/// Notifications are a convenience: if setup fails the app still works.
+Future<NotificationService> _startNotifications() async {
+  final service = LocalNotificationService();
+  try {
+    await service.init();
+    return service;
+  } on Object catch (error) {
+    AppLog.e('boot', 'Notifications unavailable', error);
+    return NoopNotificationService();
   }
 }
 

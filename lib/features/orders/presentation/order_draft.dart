@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:tailor_khata/core/media/media_store.dart';
 import 'package:tailor_khata/core/money/money.dart';
 import 'package:tailor_khata/features/measurements/domain/measurement.dart';
 import 'package:tailor_khata/features/orders/domain/order.dart';
@@ -22,6 +23,9 @@ class DraftItem {
   String colour = '';
   String note = '';
   String priceText = '';
+
+  /// Photos already saved to the media store (design pictures, swatches).
+  final List<StoredImage> photos = [];
 
   Money? get price => Money.tryParse(priceText);
 }
@@ -95,6 +99,7 @@ class OrderDraft extends ChangeNotifier {
             colour: i.colour.trim().isEmpty ? null : i.colour.trim(),
             style: i.style,
             note: i.note.trim().isEmpty ? null : i.note.trim(),
+            photos: List.of(i.photos),
           ),
       ],
       advance: advance.isZero

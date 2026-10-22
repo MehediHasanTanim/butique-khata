@@ -246,9 +246,9 @@ void main() {
       );
       await repo.setItemStatus(b.id, OrderStatus.cut);
       expect((await repo.detail(d.order.id))!.order.status, OrderStatus.cut);
-      await repo.setItemStatus(b.id, OrderStatus.delivered);
+      await repo.setItemStatus(b.id, OrderStatus.delivered, dueConfirmed: true);
       expect((await repo.detail(d.order.id))!.order.status, OrderStatus.ready);
-      await repo.setItemStatus(a.id, OrderStatus.delivered);
+      await repo.setItemStatus(a.id, OrderStatus.delivered, dueConfirmed: true);
       expect(
         (await repo.detail(d.order.id))!.order.status,
         OrderStatus.delivered,
@@ -418,7 +418,11 @@ void main() {
       final c1 = await repo.watchSummaries(customerId: 'c1').first;
       expect(c1.single.order.id, a.order.id);
 
-      await repo.setAllItemsStatus(a.order.id, OrderStatus.delivered);
+      await repo.setAllItemsStatus(
+        a.order.id,
+        OrderStatus.delivered,
+        dueConfirmed: true,
+      );
       expect(await repo.watchSummaries(openOnly: true).first, hasLength(1));
       expect(await repo.watchSummaries().first, hasLength(2));
     });
@@ -523,6 +527,6 @@ void main() {
       ]),
     );
     final v = await upgraded.customSelect('PRAGMA user_version').getSingle();
-    expect(v.read<int>('user_version'), 3);
+    expect(v.read<int>('user_version'), AppDatabase.currentSchemaVersion);
   });
 }

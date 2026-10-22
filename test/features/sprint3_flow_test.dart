@@ -110,6 +110,14 @@ void main() {
 
   Future<void> tapText(WidgetTester tester, String text) async {
     final finder = find.text(text).last;
+    if (find.text(text).evaluate().isEmpty) {
+      // Lazily built list: scroll until it exists.
+      await tester.scrollUntilVisible(
+        find.text(text),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+    }
     await tester.ensureVisible(finder);
     await tester.pumpAndSettle();
     await tester.tap(finder);
@@ -472,6 +480,11 @@ void main() {
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
     await tapKeyed(tester, 'edit-delivery-save');
+    // The date moved, so the app offers to tell the customer; skip it here.
+    expect(find.text('Tell the customer?'), findsNothing);
+    expect(find.byKey(const ValueKey('message-text')), findsOneWidget);
+    await tester.tap(find.text('Not now'));
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('25'), findsWidgets);
     final order = (await tester.runAsync(() => orders.detail('o-1')))!;

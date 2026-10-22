@@ -36,4 +36,11 @@ abstract class AppRoutes {
   static String newOrder(String customerId, {String? duplicateOf}) =>
       '/customer/$customerId/order/new'
       '${duplicateOf == null ? '' : '?dup=$duplicateOf'}';
+
+  static String slip(String orderId) => '/order/$orderId/slip';
+  static String deliveries({String? tab}) =>
+      '/deliveries${tab == null ? '' : '?tab=$tab'}';
+  static const search = '/search';
+  static const settingsReminders = '/more/reminders';
+  static const settingsMessages = '/more/messages';
 }

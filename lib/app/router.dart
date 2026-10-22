@@ -7,15 +7,21 @@ import 'package:tailor_khata/features/customers/presentation/customer_form_scree
 import 'package:tailor_khata/features/customers/presentation/customer_list_screen.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_picker_screen.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_profile_screen.dart';
+import 'package:tailor_khata/features/customers/presentation/global_search_screen.dart';
+import 'package:tailor_khata/features/deliveries/presentation/deliveries_screen.dart';
+import 'package:tailor_khata/features/deliveries/presentation/home_screen.dart';
 import 'package:tailor_khata/features/dev/seed_screen.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_compare_screen.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_entry_screen.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_history_screen.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_trend_screen.dart';
+import 'package:tailor_khata/features/orders/presentation/cutting_slip.dart';
 import 'package:tailor_khata/features/orders/presentation/new_order_screen.dart';
 import 'package:tailor_khata/features/orders/presentation/order_detail_screen.dart';
 import 'package:tailor_khata/features/orders/presentation/orders_screen.dart';
+import 'package:tailor_khata/features/settings/presentation/messages_screen.dart';
 import 'package:tailor_khata/features/settings/presentation/more_screen.dart';
+import 'package:tailor_khata/features/settings/presentation/reminders_screen.dart';
 
 export 'package:tailor_khata/app/routes.dart';
 
@@ -50,7 +56,9 @@ GoRouter buildRouter({String initialLocation = AppRoutes.home}) => GoRouter(
           routes: [
             GoRoute(
               path: AppRoutes.orders,
-              builder: (context, state) => const OrdersScreen(),
+              builder: (context, state) => OrdersScreen(
+                initialTab: state.uri.queryParameters['tab'] == 'dues' ? 1 : 0,
+              ),
             ),
           ],
         ),
@@ -89,6 +97,36 @@ GoRouter buildRouter({String initialLocation = AppRoutes.home}) => GoRouter(
       parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) =>
           OrderDetailScreen(orderId: state.pathParameters['id']!),
+      routes: [
+        GoRoute(
+          path: 'slip',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) =>
+              CuttingSlipScreen(orderId: state.pathParameters['id']!),
+        ),
+      ],
+    ),
+    GoRoute(
+      path: AppRoutes.settingsReminders,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const RemindersScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.settingsMessages,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const MessagesScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.search,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const GlobalSearchScreen(),
+    ),
+    GoRoute(
+      path: '/deliveries',
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => DeliveriesScreen(
+        initialTab: DeliveryTab.fromName(state.uri.queryParameters['tab']),
+      ),
     ),
     GoRoute(
       path: AppRoutes.customerNew,

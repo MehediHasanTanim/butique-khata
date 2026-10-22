@@ -498,5 +498,163 @@
   },
   "actionAdd": "Add",
   "actionClose": "Close",
-  "creditShort": "Credit"
+  "creditShort": "Credit",
+  "reminderEveningTitle": "{count, plural, =1{1 delivery tomorrow} other{{count} deliveries tomorrow}}",
+  "@reminderEveningTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderMorningTitle": "{count, plural, =1{1 delivery today} other{{count} deliveries today}}",
+  "@reminderMorningTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderOverdueTitle": "{count, plural, =1{1 delivery overdue} other{{count} deliveries overdue}}",
+  "@reminderOverdueTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderBody": "Tap to see what is due.",
+  "deliveriesTitle": "Deliveries",
+  "tabToday": "Today",
+  "tabTomorrow": "Tomorrow",
+  "tabWeek": "This week",
+  "tabOverdue": "Overdue",
+  "tabUncollected": "Uncollected",
+  "tabWithCount": "{label} ({count})",
+  "@tabWithCount": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nothingDue": "Nothing due here",
+  "nothingDueBody": "Orders with this delivery date will appear here.",
+  "loadMore": "Load more",
+  "readyForDays": "Ready for {days} days",
+  "@readyForDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "dashDueToday": "Due today",
+  "dashOverdue": "Overdue",
+  "dashOutstanding": "Outstanding money",
+  "dashReceivedToday": "Orders received today",
+  "dashQuickActions": "Quick actions",
+  "dashSearch": "Search",
+  "dashUncollected": "Waiting for pickup",
+  "markReady": "Mark ready",
+  "deliverOrder": "Deliver",
+  "deliverDueTitle": "{amount} is still due",
+  "@deliverDueTitle": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "deliverCollect": "Collect {amount} and deliver",
+  "@deliverCollect": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "deliverWithDue": "Deliver anyway, {amount} stays due",
+  "@deliverWithDue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "delivered": "Delivered",
+  "sendMessage": "Send message",
+  "messageReadyTitle": "Tell the customer?",
+  "messageSms": "SMS",
+  "messageWhatsApp": "WhatsApp",
+  "messageCopy": "Copy text",
+  "messageCopied": "Message copied",
+  "messageNoPhone": "No phone number saved. The message was copied instead.",
+  "messageCouldNotOpen": "Could not open the app. The message was copied.",
+  "messageLater": "Not now",
+  "rescheduleReason": "Reason (optional)",
+  "rescheduleNotify": "Tell the customer about the new date?",
+  "settingsReminders": "Reminders",
+  "settingsRemindersSubtitle": "Delivery reminders and notification settings",
+  "remindersOn": "Delivery reminders",
+  "remindersEvening": "Evening before",
+  "remindersMorning": "Morning of delivery",
+  "remindersDigest": "Overdue reminder",
+  "notificationsAllowed": "Notifications are allowed",
+  "notificationsBlocked": "Notifications are off for this app",
+  "notificationsAllow": "Allow notifications",
+  "batteryTitle": "If reminders do not appear",
+  "batteryBody": "Some phones stop apps in the background to save battery. Open your phone Settings → Battery and set Tailor Khata to \"No restrictions\" or \"Do not optimise\". The Home screen always shows today’s deliveries even without notifications.",
+  "settingsMessages": "Messages & shop",
+  "settingsMessagesSubtitle": "Shop name and message wording",
+  "shopNameLabel": "Shop name",
+  "templateReady": "“Ready” message",
+  "templateDue": "“Balance due” message",
+  "templateMoved": "“Delivery moved” message",
+  "templateHelp": "Words you can use in the text:",
+  "templateReset": "Use standard wording",
+  "uncollectedAfter": "Uncollected after (days)",
+  "photosTitle": "Photos",
+  "photoCamera": "Camera",
+  "photoGallery": "Gallery",
+  "photoRemove": "Remove photo",
+  "photoFailed": "Could not use that photo",
+  "photoAdd": "Add photo",
+  "slipTitle": "Cutting slip",
+  "slipShare": "Share slip",
+  "slipOrderNo": "Order #{n}",
+  "@slipOrderNo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "slipCustomer": "Customer",
+  "slipDelivery": "Delivery",
+  "slipTrial": "Trial",
+  "slipMeasurements": "Measurements",
+  "slipNoMeasurements": "No measurements linked",
+  "slipShared": "Slip shared",
+  "slipFailed": "Could not create the slip",
+  "filterTitle": "Filter orders",
+  "filterStatus": "Status",
+  "filterDueOnly": "Only with money due",
+  "filterGarment": "Garment",
+  "filterAnyGarment": "Any garment",
+  "filterDates": "Delivery dates",
+  "filterFrom": "From",
+  "filterTo": "To",
+  "filterClear": "Clear filters",
+  "filterApply": "Apply",
+  "orderSearchHint": "Order number, name or phone",
+  "searchTitle": "Search",
+  "searchHint": "Customers and orders",
+  "searchCustomers": "Customers",
+  "searchOrders": "Orders",
+  "searchNothing": "Nothing found",
+  "filterNoMatch": "No orders match these filters"
 }

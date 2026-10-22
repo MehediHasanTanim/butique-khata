@@ -1,3 +1,4 @@
+import 'package:tailor_khata/core/media/media_store.dart';
 import 'package:tailor_khata/core/money/money.dart';
 import 'package:tailor_khata/features/orders/domain/order_status.dart';
 
@@ -250,7 +251,11 @@ class NewOrderItem {
     this.style = const {},
     this.note,
     this.workUnits = 100,
+    this.photos = const [],
   });
+
+  /// Photos already saved in the media store (design pictures, swatches).
+  final List<StoredImage> photos;
 
   final String garmentTypeId;
   final Money price;

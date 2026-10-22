@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tailor_khata/app/providers.dart';
 import 'package:tailor_khata/app/routes.dart';
+import 'package:tailor_khata/app/services.dart';
 import 'package:tailor_khata/core/l10n/digit_formatter.dart';
 import 'package:tailor_khata/core/money/money.dart';
 import 'package:tailor_khata/core/time/clock.dart';
@@ -18,6 +19,7 @@ import 'package:tailor_khata/features/orders/domain/style_catalog.dart';
 import 'package:tailor_khata/features/orders/presentation/order_draft.dart';
 import 'package:tailor_khata/features/orders/presentation/order_labels.dart';
 import 'package:tailor_khata/features/orders/presentation/order_providers.dart';
+import 'package:tailor_khata/features/orders/presentation/photo_widgets.dart';
 import 'package:tailor_khata/l10n/gen/app_localizations.dart';
 
 /// New-order wizard: garments → measurements → details & price → delivery
@@ -105,6 +107,16 @@ class _NewOrderScreenState extends ConsumerState<NewOrderScreen> {
     item.latest = latest;
     item.measurement = latest;
     item.measurementSetId = latest?.id;
+  }
+
+  /// Photos of an order that was never saved are not kept.
+  Future<void> _deleteDraftPhotos(OrderDraft draft) async {
+    final media = ref.read(mediaStoreProvider);
+    for (final item in draft.items) {
+      for (final photo in item.photos) {
+        await media.delete(photo);
+      }
+    }
   }
 
   Future<bool> _confirmDiscard() async {
@@ -205,6 +217,7 @@ class _NewOrderScreenState extends ConsumerState<NewOrderScreen> {
           final navigator = Navigator.of(context);
           if (await _confirmDiscard()) {
             _done = true;
+            await _deleteDraftPhotos(draft);
             navigator.pop();
           }
         },
@@ -628,6 +641,8 @@ class _DetailsStep extends ConsumerWidget {
                     decoration: InputDecoration(labelText: l10n.itemNoteLabel),
                     onChanged: (v) => item.note = v,
                   ),
+                  const SizedBox(height: 12),
+                  DraftPhotosSection(item: item, draft: draft),
                   const SizedBox(height: 12),
                   TextFormField(
                     key: ValueKey('price-${item.garment.key}'),

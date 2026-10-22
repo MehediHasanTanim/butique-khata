@@ -10,7 +10,8 @@ Docs: [feature spec](docs/feature-spec.md) · [technical design](docs/technical-
 |---|---|
 | S0 Foundations | Done (S0-12 cold-start baseline on a real phone still to do) |
 | S1 Customers + measurement capture | Done: customer book with FTS search, templates for 7 garments, fast keypad, append-only versioned measurements |
-| S3 Orders + payments | Done except S3-06 (photo attachments) and S3-12 (cutting slip PDF): order wizard, status pipeline, advance/due, payments, cancel, duplicate, dues list |
+| S3 Orders + payments | Done, including photo attachments and the cutting slip (shared as a picture, not a PDF): order wizard, status pipeline, advance/due, payments, cancel, duplicate, dues list |
+| S4 Deliveries, reminders, dashboard | Done: dashboard, delivery tabs, guarded delivery, customer messages (SMS/WhatsApp), local reminders, filters and search |
 | S2 Measurement history | Done except S2-10 (PDF/image export) and S2-12 (tailor usability session): timeline, compare, trend, error flag, fit result, change prompts |
 
 ## Setup
@@ -68,6 +69,11 @@ test/
 - Everything works offline and in English and Bangla.
 
 - Orders: a four-step wizard (garments → measurements, "no change" or edit → style, fabric, colour and price → delivery date, advance and payment). Each garment is cut from an exact, immutable measurement version. Order screen with per-garment progress (received → delivered, one step back allowed), payments and refunds, cancel with refund-or-keep, change-delivery with a change log, duplicate order. Orders tab lists open orders by delivery date; the Dues tab shows who owes what.
+
+- Deliveries: the Home screen shows what is due today, overdue, owed and received today. Deliveries has Today / Tomorrow / This week / Overdue / Uncollected tabs. "Mark ready" offers a prefilled SMS or WhatsApp message (wording editable in More → Messages & shop); "Deliver" refuses to hand over unpaid work without an explicit choice (collect and deliver, or deliver with the balance still owing). Moving a delivery date can notify the customer and records the reason.
+- Reminders: local notifications the evening before and the morning of delivery days (grouped per day) plus a daily overdue nudge. Times are set in More → Reminders; the schedule is rebuilt at app start and whenever orders change. The Home screen is the source of truth if the phone suppresses notifications.
+- Photos and slips: attach design photos to each garment (camera or gallery; stored compressed in the app's private folder). The cutting slip combines order, style, exact measurements and photos on one page and is shared as a picture.
+- Search: Home search finds customers and orders; the Orders tab filters by status, balance, garment and delivery dates.
 
 ## Debug tools
 
