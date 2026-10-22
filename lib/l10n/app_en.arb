@@ -45,9 +45,151 @@
   "seedDone": "Created {count} records in {ms} ms",
   "@seedDone": {
     "placeholders": {
-      "count": {"type": "int"},
-      "ms": {"type": "int"}
+      "count": {
+        "type": "int"
+      },
+      "ms": {
+        "type": "int"
+      }
     }
   },
-  "seedClear": "Clear test data"
+  "seedClear": "Clear test data",
+  "customerSearchHint": "Search name or phone",
+  "customerAdd": "Add customer",
+  "customerNew": "New customer",
+  "customerEdit": "Edit customer",
+  "fieldName": "Name",
+  "fieldPhone": "Phone (optional)",
+  "fieldAddress": "Address (optional)",
+  "fieldNote": "Note (optional)",
+  "nameRequired": "Please enter a name",
+  "phoneInvalid": "Enter a valid mobile number, e.g. 01712-345678",
+  "duplicatePhoneTitle": "Number already saved",
+  "duplicatePhoneBody": "{name} already has this number. Open that customer, or save this one anyway?",
+  "@duplicatePhoneBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "duplicateOpenExisting": "Open {name}",
+  "@duplicateOpenExisting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "duplicateSaveAnyway": "Save anyway",
+  "customerDeleted": "{name} removed",
+  "@customerDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "actionUndo": "Undo",
+  "actionDelete": "Delete",
+  "actionEdit": "Edit",
+  "actionOk": "OK",
+  "noResults": "No customers match “{query}”",
+  "@noResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "customerSaved": "Customer saved",
+  "customerNotFound": "This customer was not found",
+  "tabOverview": "Overview",
+  "tabMeasurements": "Measurements",
+  "tabOrders": "Orders",
+  "tabPayments": "Payments",
+  "measurementsEmptyTitle": "No measurements yet",
+  "measurementsEmptyBody": "Take the first measurements to start this customer’s naap book.",
+  "takeMeasurements": "Take measurements",
+  "chooseGarment": "Choose garment",
+  "measuredOn": "Measured {date}",
+  "@measuredOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "versionLabel": "Version {n}",
+  "@versionLabel": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "fieldsCount": "{count} measurements",
+  "@fieldsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ordersTabEmpty": "Orders for this customer will appear here.",
+  "paymentsTabEmpty": "Advance and due will appear here.",
+  "detailsPhone": "Phone",
+  "detailsAddress": "Address",
+  "detailsNote": "Note",
+  "detailsNone": "Not added",
+  "measureTitle": "{garment} measurements",
+  "@measureTitle": {
+    "placeholders": {
+      "garment": {
+        "type": "String"
+      }
+    }
+  },
+  "unitInch": "Inch",
+  "unitCm": "cm",
+  "takenOn": "Date",
+  "noteLabel": "Note",
+  "noteHint": "e.g. left shoulder lower, wants loose fit",
+  "saveMeasurements": "Save",
+  "enterAtLeastOne": "Enter at least one measurement",
+  "rangeLow": "Looks small, please check",
+  "rangeHigh": "Looks large, please check",
+  "measurementSaved": "Measurements saved",
+  "keyNext": "Next",
+  "keyDone": "Done",
+  "previousField": "Previous field",
+  "prefilledFromLast": "Started from the measurements of {date}",
+  "@prefilledFromLast": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "seedSaved": "Saved {count} test customers",
+  "@seedSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "seedRemoved": "Removed {count} test customers",
+  "@seedRemoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "seedWrite": "Save to database",
+  "discardTitle": "Discard measurements?",
+  "discardBody": "You have typed measurements that are not saved yet.",
+  "actionDiscard": "Discard",
+  "actionKeepEditing": "Keep editing"
 }

@@ -20,23 +20,6 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class CustomersScreen extends StatelessWidget {
-  const CustomersScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppL10n.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.customersTitle)),
-      body: EmptyState(
-        icon: Icons.people_outline,
-        title: l10n.customersEmptyTitle,
-        body: l10n.customersEmptyBody,
-      ),
-    );
-  }
-}
-
 class OrdersScreen extends StatelessWidget {
   const OrdersScreen({super.key});
 

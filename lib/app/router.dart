@@ -2,19 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tailor_khata/app/home_shell.dart';
 import 'package:tailor_khata/app/placeholder_screens.dart';
+import 'package:tailor_khata/app/routes.dart';
+import 'package:tailor_khata/features/customers/presentation/customer_form_screen.dart';
+import 'package:tailor_khata/features/customers/presentation/customer_list_screen.dart';
+import 'package:tailor_khata/features/customers/presentation/customer_profile_screen.dart';
 import 'package:tailor_khata/features/dev/seed_screen.dart';
+import 'package:tailor_khata/features/measurements/presentation/measurement_entry_screen.dart';
 import 'package:tailor_khata/features/settings/presentation/more_screen.dart';
 
-abstract class AppRoutes {
-  static const home = '/home';
-  static const customers = '/customers';
-  static const orders = '/orders';
-  static const rush = '/rush';
-  static const more = '/more';
-  static const seed = '/more/seed';
-}
+export 'package:tailor_khata/app/routes.dart';
+
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'root',
+);
 
 GoRouter buildRouter({String initialLocation = AppRoutes.home}) => GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: initialLocation,
   routes: [
     StatefulShellRoute.indexedStack(
@@ -32,7 +35,7 @@ GoRouter buildRouter({String initialLocation = AppRoutes.home}) => GoRouter(
           routes: [
             GoRoute(
               path: AppRoutes.customers,
-              builder: (context, state) => const CustomersScreen(),
+              builder: (context, state) => const CustomerListScreen(),
             ),
           ],
         ),
@@ -60,11 +63,39 @@ GoRouter buildRouter({String initialLocation = AppRoutes.home}) => GoRouter(
               routes: [
                 GoRoute(
                   path: 'seed',
+                  parentNavigatorKey: rootNavigatorKey,
                   builder: (context, state) => const SeedScreen(),
                 ),
               ],
             ),
           ],
+        ),
+      ],
+    ),
+    GoRoute(
+      path: AppRoutes.customerNew,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const CustomerFormScreen(),
+    ),
+    GoRoute(
+      path: '/customer/:id',
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) =>
+          CustomerProfileScreen(customerId: state.pathParameters['id']!),
+      routes: [
+        GoRoute(
+          path: 'edit',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) =>
+              CustomerFormScreen(customerId: state.pathParameters['id']),
+        ),
+        GoRoute(
+          path: 'measure/:garment',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) => MeasurementEntryScreen(
+            customerId: state.pathParameters['id']!,
+            garmentKey: state.pathParameters['garment']!,
+          ),
         ),
       ],
     ),

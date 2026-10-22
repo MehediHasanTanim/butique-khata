@@ -4,6 +4,13 @@ Order and measurement book for tailors and boutiques: customer measurements (naa
 
 Docs: [feature spec](docs/feature-spec.md) · [technical design](docs/technical-design.md) · [implementation plan](docs/implementation-plan.md)
 
+## Status
+
+| Sprint | State |
+|---|---|
+| S0 Foundations | Done (S0-12 cold-start baseline on a real phone still to do) |
+| S1 Customers + measurement capture | Done: customer book with FTS search, templates for 7 garments, fast keypad, append-only versioned measurements |
+
 ## Setup
 
 Requirements: Flutter (stable, Dart 3.13+), Android SDK for device builds.
@@ -51,6 +58,12 @@ test/
 - **Bangla digits** are applied only at display time; storage and parsing use ASCII.
 - A startup failure (e.g. wrong key) shows an error screen and never deletes data.
 
+## What works today
+
+- Customers: add/edit, duplicate-phone warning, swipe to delete with undo (soft delete), search by name (English or Bangla prefix) or phone digits.
+- Measurements: pick a garment, type with the custom keypad (digits, ⅛ ¼ ⅜ ½ ⅝ ¾ ⅞, decimals, inch/cm), soft range warnings, date and note, save a new version. Starts from the latest version; history UI is Sprint 2.
+- Everything works offline and in English and Bangla.
+
 ## Debug tools
 
-In debug builds, **More → Developer tools** generates synthetic Bangla/English customers and times it (the perf-harness stub; persistence arrives with the customer table in Sprint 1).
+In debug builds, **More → Developer tools** generates synthetic Bangla/English customers (100 / 1,000 / 10,000), saves them to the database and can remove them again.

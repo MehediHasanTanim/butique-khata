@@ -79,6 +79,12 @@ class AppTheme {
         minVerticalPadding: 12,
         contentPadding: EdgeInsets.symmetric(horizontal: 16),
       ),
+      // Floating and lifted so a snackbar never covers a bottom action button
+      // (primary buttons are 56 dp tall with 16 dp padding).
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        insetPadding: EdgeInsets.fromLTRB(16, 0, 16, 96),
+      ),
       navigationBarTheme: NavigationBarThemeData(
         height: 68,
         labelTextStyle: WidgetStatePropertyAll(

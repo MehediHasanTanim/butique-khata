@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tailor_khata/app/providers.dart';
-import 'package:tailor_khata/app/router.dart';
+import 'package:tailor_khata/app/routes.dart';
 import 'package:tailor_khata/core/ui/app_list_tile.dart';
 import 'package:tailor_khata/core/ui/section_header.dart';
 import 'package:tailor_khata/l10n/gen/app_localizations.dart';

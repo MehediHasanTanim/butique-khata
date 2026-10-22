@@ -9,7 +9,6 @@ import '../support/test_app.dart';
 void main() {
   testWidgets('shows five tabs and navigates between them', (tester) async {
     final db = memoryDb();
-    addTearDown(db.close);
     await tester.pumpWidget(buildTestApp(db));
     await tester.pumpAndSettle();
 
@@ -29,13 +28,13 @@ void main() {
     await tester.tap(find.text('Rush').last);
     await tester.pumpAndSettle();
     expect(find.text('Rush mode is off'), findsOneWidget);
+    await shutDown(tester, db);
   });
 
   testWidgets('switches to Bangla at runtime and persists the choice', (
     tester,
   ) async {
     final db = memoryDb();
-    addTearDown(db.close);
     await tester.pumpWidget(buildTestApp(db));
     await tester.pumpAndSettle();
 
@@ -52,31 +51,31 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Language'), findsOneWidget);
     expect(await SettingsRepository(db).read(SettingKeys.locale), 'en');
+    await shutDown(tester, db);
   });
 
   testWidgets('starts in the persisted language', (tester) async {
     final db = memoryDb();
-    addTearDown(db.close);
     await tester.pumpWidget(buildTestApp(db, locale: 'bn'));
     await tester.pumpAndSettle();
     expect(find.text('হোম'), findsWidgets);
     expect(find.text('আজকের কাজ'), findsOneWidget);
+    await shutDown(tester, db);
   });
 
   testWidgets('bottom navigation targets are at least 48dp tall', (
     tester,
   ) async {
     final db = memoryDb();
-    addTearDown(db.close);
     await tester.pumpWidget(buildTestApp(db));
     await tester.pumpAndSettle();
     final bar = tester.getSize(find.byType(NavigationBar));
     expect(bar.height, greaterThanOrEqualTo(48));
+    await shutDown(tester, db);
   });
 
   testWidgets('useBanglaDigitsProvider follows the locale', (tester) async {
     final db = memoryDb();
-    addTearDown(db.close);
     late WidgetRef captured;
     await tester.pumpWidget(
       ProviderScope(
@@ -93,5 +92,6 @@ void main() {
       ),
     );
     expect(captured.read(useBanglaDigitsProvider), isTrue);
+    await shutDown(tester, db);
   });
 }
