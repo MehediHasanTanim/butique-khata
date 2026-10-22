@@ -18,6 +18,20 @@ enum MeasurementStatus {
       value == 'error' ? MeasurementStatus.error : MeasurementStatus.active;
 }
 
+/// How a garment made from a measurement version turned out (H-6).
+enum FitOutcome {
+  confirmed,
+  altered;
+
+  String get dbValue => name;
+
+  static FitOutcome? fromDb(String? value) => switch (value) {
+    'confirmed' => FitOutcome.confirmed,
+    'altered' => FitOutcome.altered,
+    _ => null,
+  };
+}
+
 /// One field of a garment template.
 class FieldTemplate {
   const FieldTemplate({
@@ -73,12 +87,14 @@ class Measurement {
     this.takenBy,
     this.note,
     this.supersedesId,
+    this.fitOutcome,
   });
 
   final String id;
   final String customerId;
   final String garmentTypeId;
   final int version;
+  final FitOutcome? fitOutcome;
 
   /// Calendar date, `YYYY-MM-DD`.
   final String takenOn;

@@ -4,8 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:tailor_khata/app/providers.dart';
 import 'package:tailor_khata/core/time/clock.dart';
 import 'package:tailor_khata/core/time/date_format.dart';
+import 'package:tailor_khata/core/units/length.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_providers.dart';
 import 'package:tailor_khata/features/measurements/domain/measurement.dart';
+import 'package:tailor_khata/features/measurements/domain/measurement_diff.dart';
+import 'package:tailor_khata/features/measurements/domain/measurement_format.dart';
+import 'package:tailor_khata/features/measurements/domain/save_measurement.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_form_model.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_keypad.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_providers.dart';
@@ -119,10 +123,12 @@ class _MeasurementEntryScreenState
         );
       return;
     }
+    if (!await _confirmLargeChanges(values)) return;
+    if (!mounted) return;
     setState(() => _saving = true);
-    await ref
-        .read(measurementRepositoryProvider)
-        .create(
+    final outcome = await ref
+        .read(saveMeasurementProvider)
+        .call(
           NewMeasurement(
             customerId: widget.customerId,
             garmentTypeId: _garment!.id,
@@ -135,9 +141,70 @@ class _MeasurementEntryScreenState
         );
     if (!mounted) return;
     _saved = true;
+    final message = switch (outcome) {
+      MeasurementSaved() => l10n.measurementSaved,
+      MeasurementUnchanged() => l10n.noChangeSaved,
+    };
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(l10n.measurementSaved)));
+        .showSnackBar(SnackBar(content: Text(message)));
     context.pop();
+  }
+
+  /// Asks the tailor to confirm fields that moved a lot since last time
+  /// (§4.4). Returns true when it is fine to save.
+  Future<bool> _confirmLargeChanges(Map<String, Length> values) async {
+    final previous = _previous;
+    if (previous == null) return true;
+    final big = largeChanges(previous.values, values);
+    if (big.isEmpty) return true;
+
+    final l10n = AppL10n.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
+    final bangla = ref.read(useBanglaDigitsProvider);
+    final unit = _model!.unit;
+    final labels = {for (final f in _garment!.fields) f.key: f.label(lang)};
+    final lines = [
+      for (final d in big)
+        l10n.changeConfirmLine(
+          labels[d.key] ?? d.key,
+          formatLength(d.before!, unit, bangla: bangla),
+          formatLength(d.after!, unit, bangla: bangla),
+          formatDelta(d.delta!, unit, bangla: bangla),
+        ),
+    ];
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.changeConfirmTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.changeConfirmBody),
+            const SizedBox(height: 12),
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text(
+                  line,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.actionGoBack),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.actionYesSave),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
   }
 
   Future<bool> _confirmDiscard() async {

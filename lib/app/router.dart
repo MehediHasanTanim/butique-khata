@@ -7,7 +7,10 @@ import 'package:tailor_khata/features/customers/presentation/customer_form_scree
 import 'package:tailor_khata/features/customers/presentation/customer_list_screen.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_profile_screen.dart';
 import 'package:tailor_khata/features/dev/seed_screen.dart';
+import 'package:tailor_khata/features/measurements/presentation/measurement_compare_screen.dart';
 import 'package:tailor_khata/features/measurements/presentation/measurement_entry_screen.dart';
+import 'package:tailor_khata/features/measurements/presentation/measurement_history_screen.dart';
+import 'package:tailor_khata/features/measurements/presentation/measurement_trend_screen.dart';
 import 'package:tailor_khata/features/settings/presentation/more_screen.dart';
 
 export 'package:tailor_khata/app/routes.dart';
@@ -88,6 +91,32 @@ GoRouter buildRouter({String initialLocation = AppRoutes.home}) => GoRouter(
           parentNavigatorKey: rootNavigatorKey,
           builder: (context, state) =>
               CustomerFormScreen(customerId: state.pathParameters['id']),
+        ),
+        GoRoute(
+          path: 'history/:garment',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) => MeasurementHistoryScreen(
+            customerId: state.pathParameters['id']!,
+            garmentKey: state.pathParameters['garment']!,
+          ),
+        ),
+        GoRoute(
+          path: 'compare/:garment',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) => MeasurementCompareScreen(
+            customerId: state.pathParameters['id']!,
+            garmentKey: state.pathParameters['garment']!,
+            earlierId: state.uri.queryParameters['a'],
+            laterId: state.uri.queryParameters['b'],
+          ),
+        ),
+        GoRoute(
+          path: 'trend/:garment',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) => MeasurementTrendScreen(
+            customerId: state.pathParameters['id']!,
+            garmentKey: state.pathParameters['garment']!,
+          ),
         ),
         GoRoute(
           path: 'measure/:garment',

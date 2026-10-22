@@ -126,9 +126,37 @@ class DriftMeasurementRepository implements MeasurementRepository {
   }
 
   @override
-  Future<void> markError(String id) =>
-      (_db.update(_db.measurementSet)..where((t) => t.id.equals(id))).write(
-        const MeasurementSetCompanion(status: Value('error')),
+  Future<void> markError(String id) => _setStatus(id, 'error', 'mark_error');
+
+  @override
+  Future<void> restore(String id) => _setStatus(id, 'active', 'unmark_error');
+
+  @override
+  Future<void> setFitOutcome(String id, FitOutcome? outcome) => _db.transaction(
+    () async {
+      await (_db.update(_db.measurementSet)..where((t) => t.id.equals(id)))
+          .write(MeasurementSetCompanion(fitOutcome: Value(outcome?.dbValue)));
+      await _audit(id, 'fit_outcome', outcome?.dbValue);
+    },
+  );
+
+  Future<void> _setStatus(String id, String status, String action) =>
+      _db.transaction(() async {
+        await (_db.update(_db.measurementSet)..where((t) => t.id.equals(id)))
+            .write(MeasurementSetCompanion(status: Value(status)));
+        await _audit(id, action, status);
+      });
+
+  Future<void> _audit(String id, String action, String? value) => _db
+      .into(_db.auditLog)
+      .insert(
+        AuditLogCompanion.insert(
+          at: _clock.now().millisecondsSinceEpoch,
+          entity: 'measurement_set',
+          entityId: id,
+          action: action,
+          diffJson: Value(value == null ? null : '{"to":"$value"}'),
+        ),
       );
 
   // ---- reads --------------------------------------------------------------
@@ -171,6 +199,17 @@ class DriftMeasurementRepository implements MeasurementRepository {
     if (rows.isEmpty) return null;
     return (await _hydrate(rows)).single;
   }
+
+  @override
+  Stream<List<Measurement>> watchVersions(
+    String customerId,
+    String garmentTypeId, {
+    bool includeErrors = false,
+  }) => _ordered(
+    customerId,
+    garmentTypeId: garmentTypeId,
+    includeErrors: includeErrors,
+  ).watch().asyncMap(_hydrate);
 
   @override
   Stream<List<Measurement>> watchLatestPerGarment(String customerId) =>
@@ -220,6 +259,7 @@ class DriftMeasurementRepository implements MeasurementRepository {
           unit: MeasureUnit.fromDb(row.displayUnit),
           status: MeasurementStatus.fromDb(row.status),
           supersedesId: row.supersedesId,
+          fitOutcome: FitOutcome.fromDb(row.fitOutcome),
           createdAt: DateTime.fromMillisecondsSinceEpoch(row.createdAt),
           values: bySet[row.id] ?? const {},
         ),

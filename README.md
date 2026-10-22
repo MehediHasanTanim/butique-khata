@@ -10,6 +10,7 @@ Docs: [feature spec](docs/feature-spec.md) · [technical design](docs/technical-
 |---|---|
 | S0 Foundations | Done (S0-12 cold-start baseline on a real phone still to do) |
 | S1 Customers + measurement capture | Done: customer book with FTS search, templates for 7 garments, fast keypad, append-only versioned measurements |
+| S2 Measurement history | Done except S2-10 (PDF/image export) and S2-12 (tailor usability session): timeline, compare, trend, error flag, fit result, change prompts |
 
 ## Setup
 
@@ -61,7 +62,8 @@ test/
 ## What works today
 
 - Customers: add/edit, duplicate-phone warning, swipe to delete with undo (soft delete), search by name (English or Bangla prefix) or phone digits.
-- Measurements: pick a garment, type with the custom keypad (digits, ⅛ ¼ ⅜ ½ ⅝ ¾ ⅞, decimals, inch/cm), soft range warnings, date and note, save a new version. Starts from the latest version; history UI is Sprint 2.
+- Measurements: pick a garment, type with the custom keypad (digits, ⅛ ¼ ⅜ ½ ⅝ ¾ ⅞, decimals, inch/cm), soft range warnings, date and note, save a new version. Starts from the latest version.
+- History: every version per garment on a timeline with what changed, side-by-side compare of any two versions, a trend chart per field, "entered in error" (hidden, reversible, audit-logged) and a fit result (confirmed / needed alteration). Saving unchanged values creates no new version, and a field that moved more than 1.5 in asks for confirmation.
 - Everything works offline and in English and Bangla.
 
 ## Debug tools

@@ -4,6 +4,7 @@ import 'package:tailor_khata/features/customers/presentation/customer_providers.
 import 'package:tailor_khata/features/measurements/data/drift_measurement_repository.dart';
 import 'package:tailor_khata/features/measurements/domain/measurement.dart';
 import 'package:tailor_khata/features/measurements/domain/measurement_repository.dart';
+import 'package:tailor_khata/features/measurements/domain/save_measurement.dart';
 
 final measurementRepositoryProvider = Provider<MeasurementRepository>(
   (ref) => DriftMeasurementRepository(
@@ -24,3 +25,32 @@ final latestMeasurementsProvider = StreamProvider.autoDispose
           .watch(measurementRepositoryProvider)
           .watchLatestPerGarment(customerId),
     );
+
+final saveMeasurementProvider = Provider<SaveMeasurement>(
+  (ref) => SaveMeasurement(ref.watch(measurementRepositoryProvider)),
+);
+
+/// Selects one garment's history for one customer.
+typedef HistoryKey = ({
+  String customerId,
+  String garmentTypeId,
+  bool includeErrors,
+});
+
+final measurementVersionsProvider = StreamProvider.autoDispose
+    .family<List<Measurement>, HistoryKey>(
+      (ref, key) => ref
+          .watch(measurementRepositoryProvider)
+          .watchVersions(
+            key.customerId,
+            key.garmentTypeId,
+            includeErrors: key.includeErrors,
+          ),
+    );
+
+/// One garment type by its route key.
+final garmentByKeyProvider = FutureProvider.autoDispose
+    .family<GarmentInfo?, String>((ref, key) async {
+      final all = await ref.watch(measurementRepositoryProvider).garments();
+      return all.where((g) => g.key == key).firstOrNull;
+    });

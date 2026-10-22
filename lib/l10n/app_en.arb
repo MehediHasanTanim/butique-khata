@@ -191,5 +191,96 @@
   "discardTitle": "Discard measurements?",
   "discardBody": "You have typed measurements that are not saved yet.",
   "actionDiscard": "Discard",
-  "actionKeepEditing": "Keep editing"
+  "actionKeepEditing": "Keep editing",
+  "historyTitle": "{garment} history",
+  "@historyTitle": {
+    "placeholders": {
+      "garment": {
+        "type": "String"
+      }
+    }
+  },
+  "historyButton": "History",
+  "historyEmpty": "No measurements saved for this garment yet.",
+  "includeErrors": "Show entries marked as errors",
+  "newMeasurements": "New measurements",
+  "firstEntry": "First entry",
+  "noChangeFromPrevious": "Same as previous",
+  "changedFromPrevious": "{count} changed since previous",
+  "@changedFromPrevious": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "largestChange": "{field} {delta}",
+  "@largestChange": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "errorBadge": "Entered in error",
+  "markError": "Mark as entered in error",
+  "restoreVersion": "Restore this entry",
+  "markErrorTitle": "Mark as entered in error?",
+  "markErrorBody": "It will be hidden from history, compare and trends. Nothing is deleted, and you can restore it later.",
+  "actionConfirm": "Confirm",
+  "fitResult": "Fit result",
+  "fitConfirmed": "Fit confirmed",
+  "fitAltered": "Needed alteration",
+  "fitClear": "Clear fit result",
+  "bestFit": "Best fit",
+  "compareTitle": "Compare",
+  "compareWithPrevious": "Compare with previous",
+  "compareLatestTwo": "Compare versions",
+  "compareEarlier": "Earlier",
+  "compareLater": "Later",
+  "compareChangedOnly": "Changed only",
+  "compareNoChanges": "No differences",
+  "compareNeedTwo": "Save at least two measurements to compare.",
+  "compareAdded": "added",
+  "compareRemoved": "removed",
+  "versionOn": "v{n} · {date}",
+  "@versionOn": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "trendTitle": "Trend",
+  "trendNeedTwo": "Save at least two measurements to see a trend.",
+  "changeConfirmTitle": "Check these changes",
+  "changeConfirmBody": "These are much bigger than last time. Is that right?",
+  "changeConfirmLine": "{field}: {from} → {to} ({delta})",
+  "@changeConfirmLine": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "actionGoBack": "Go back",
+  "actionYesSave": "Yes, save",
+  "noChangeSaved": "No changes: these are already your latest measurements",
+  "tapToSee": "Tap for details",
+  "versionLabelLatest": "Latest"
 }

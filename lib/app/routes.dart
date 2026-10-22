@@ -12,4 +12,22 @@ abstract class AppRoutes {
   static String customerEdit(String id) => '/customer/$id/edit';
   static String measure(String customerId, String garmentKey) =>
       '/customer/$customerId/measure/$garmentKey';
+  static String history(String customerId, String garmentKey) =>
+      '/customer/$customerId/history/$garmentKey';
+  static String compare(
+    String customerId,
+    String garmentKey, {
+    String? earlierId,
+    String? laterId,
+  }) {
+    final query = [
+      if (earlierId != null) 'a=$earlierId',
+      if (laterId != null) 'b=$laterId',
+    ].join('&');
+    return '/customer/$customerId/compare/$garmentKey'
+        '${query.isEmpty ? '' : '?$query'}';
+  }
+
+  static String trend(String customerId, String garmentKey) =>
+      '/customer/$customerId/trend/$garmentKey';
 }

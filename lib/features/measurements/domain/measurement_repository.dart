@@ -24,6 +24,19 @@ abstract class MeasurementRepository {
     bool includeErrors = false,
   });
 
+  /// Live list of versions for a garment, newest first.
+  Stream<List<Measurement>> watchVersions(
+    String customerId,
+    String garmentTypeId, {
+    bool includeErrors = false,
+  });
+
   /// Flags a version as "entered in error" (hidden, never deleted).
   Future<void> markError(String id);
+
+  /// Reverses [markError].
+  Future<void> restore(String id);
+
+  /// Records how the garment fitted; null clears it (H-6).
+  Future<void> setFitOutcome(String id, FitOutcome? outcome);
 }

@@ -224,7 +224,7 @@ class _MeasurementsTab extends ConsumerWidget {
                     onTap: garment == null
                         ? null
                         : () => context.push(
-                            AppRoutes.measure(customer.id, garment.key),
+                            AppRoutes.history(customer.id, garment.key),
                           ),
                   );
                 },
