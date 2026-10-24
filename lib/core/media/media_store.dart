@@ -36,8 +36,20 @@ abstract class MediaStore {
   File resolve(String path);
 }
 
+/// Turns picked bytes into a stored-size image and thumbnail.
+typedef ImageProcessor = Future<ProcessedImage> Function(Uint8List bytes);
+
+/// Default: do the heavy decoding and encoding on a background isolate so
+/// the screen never stutters.
+Future<ProcessedImage> processInBackground(Uint8List bytes) =>
+    compute(processImage, bytes);
+
 class FileMediaStore implements MediaStore {
-  FileMediaStore(this._root, [this._ids = const UuidV7Generator()]);
+  FileMediaStore(
+    this._root, [
+    this._ids = const UuidV7Generator(),
+    this._process = processInBackground,
+  ]);
 
   /// Standard location: `<app support>/media`.
   static Future<FileMediaStore> inAppSupport() async {
@@ -47,10 +59,11 @@ class FileMediaStore implements MediaStore {
 
   final Directory _root;
   final IdGenerator _ids;
+  final ImageProcessor _process;
 
   @override
   Future<StoredImage> saveImage(Uint8List bytes) async {
-    final processed = await compute(processImage, bytes);
+    final processed = await _process(bytes);
     await _root.create(recursive: true);
     final id = _ids.newId();
     final full = '$id.jpg';

@@ -14,6 +14,8 @@ import 'package:tailor_khata/features/measurements/domain/built_in_templates.dar
 import 'package:tailor_khata/features/measurements/domain/measurement.dart';
 import 'package:tailor_khata/features/orders/data/drift_order_repository.dart';
 import 'package:tailor_khata/features/orders/domain/order.dart';
+import 'package:tailor_khata/features/rush/data/drift_rush_repository.dart';
+import 'package:tailor_khata/features/rush/domain/season.dart';
 
 import 'fakes.dart';
 import 'flow_helpers.dart';
@@ -73,6 +75,7 @@ Future<OrderDetail> seedOrder({
   String garment = 'panjabi',
   Map<String, String> style = const {'collar': 'band'},
   String? measurementSetId,
+  int qty = 1,
 }) => orders.create(
   NewOrder(
     customerId: customer,
@@ -83,6 +86,7 @@ Future<OrderDetail> seedOrder({
         price: Money.taka(price),
         style: style,
         measurementSetId: measurementSetId,
+        qty: qty,
       ),
     ],
     advance: advance == 0
@@ -161,8 +165,19 @@ Future<void> reveal(WidgetTester tester, Finder finder) async {
 /// widget that is already visible can drag a tab view sideways.
 Future<void> _bringIntoView(WidgetTester tester, Finder finder) async {
   if (finder.hitTestable().evaluate().isNotEmpty) return;
+  // A focused text field pulls the scroll view back to itself whenever the
+  // layout changes, so let go of the focus before scrolling elsewhere.
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pump();
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
+  if (finder.hitTestable().evaluate().isEmpty) {
+    await tester.scrollUntilVisible(
+      finder,
+      200,
+      scrollable: verticalScrollable,
+    );
+  }
 }
 
 /// Lets real asynchronous work (isolates, file I/O, picture encoding) finish.
@@ -170,12 +185,20 @@ Future<void> _bringIntoView(WidgetTester tester, Finder finder) async {
 /// Such work needs real time, while the code that follows each step runs in
 /// the test's fake clock, so the two are alternated: wait a little for real,
 /// then pump to run what became ready, and repeat.
-Future<void> settleIo(WidgetTester tester, {int rounds = 12}) async {
-  for (var i = 0; i < rounds; i++) {
+Future<void> settleIo(
+  WidgetTester tester, {
+  int rounds = 20,
+  bool Function()? until,
+  Duration timeout = const Duration(seconds: 30),
+}) async {
+  final deadline = DateTime.now().add(timeout);
+  for (var i = 0; i < rounds || (until != null && !until()); i++) {
     await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 120)),
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
     await tester.pump();
+    if (until != null && until()) break;
+    if (DateTime.now().isAfter(deadline)) break;
   }
   await tester.pumpAndSettle();
 }
@@ -248,3 +271,23 @@ Future<List<T>> query<T>(
   WidgetTester tester,
   Future<List<T>> Function() q,
 ) async => (await tester.runAsync(q))!;
+
+/// Saves a season for the Eid-rush tests. Defaults: ready by 20 March,
+/// 10 standard garments a day, every day a working day.
+Future<void> seedSeason({
+  String target = '2026-03-20',
+  int capacity = 1000,
+  int mask = 127,
+  Set<String> closed = const {},
+  String id = 'season1',
+}) => DriftRushRepository(shopDb).save(
+  Season(
+    id: id,
+    name: 'Eid-ul-Fitr',
+    kind: SeasonKind.eidFitr,
+    targetDate: target,
+    dailyCapacity: capacity,
+    workingDaysMask: mask,
+    closedDates: closed,
+  ),
+);

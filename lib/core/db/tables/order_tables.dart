@@ -40,6 +40,12 @@ class CustomerOrder extends Table {
   TextColumn get status => text()();
   TextColumn get note => text().nullable()();
 
+  /// Season this order was planned for, if any.
+  TextColumn get seasonId => text().nullable()();
+
+  /// Taken on a date the plan said was already full (E-5).
+  BoolColumn get overbooked => boolean().withDefault(const Constant(false))();
+
   /// Set for alteration / remake orders (later).
   TextColumn get parentOrderId => text().nullable()();
   IntColumn get createdAt => integer()();

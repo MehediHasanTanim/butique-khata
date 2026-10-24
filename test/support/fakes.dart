@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
+import 'package:tailor_khata/core/ids/id_generator.dart';
+import 'package:tailor_khata/core/media/image_processor.dart';
 import 'package:tailor_khata/core/media/media_store.dart';
 import 'package:tailor_khata/core/services/external_launcher.dart';
 import 'package:tailor_khata/core/services/file_sharer.dart';
@@ -114,7 +116,13 @@ class TestEnv {
         launch: launch,
       ),
       dir = Directory.systemTemp.createTempSync('tk_media') {
-    media = FileMediaStore(Directory('${dir.path}/media'));
+    // Process pictures in the test's own isolate: no background isolate to
+    // starve when many test processes run at once.
+    media = FileMediaStore(
+      Directory('${dir.path}/media'),
+      const UuidV7Generator(),
+      (bytes) async => processImage(bytes),
+    );
   }
 
   final FixedClock clock;

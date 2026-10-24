@@ -42,6 +42,8 @@ class DriftOrderRepository implements OrderRepository {
     updatedAt: _time(r.updatedAt),
     cancelledAt: r.cancelledAt == null ? null : _time(r.cancelledAt!),
     cancelReason: r.cancelReason,
+    seasonId: r.seasonId,
+    overbooked: r.overbooked,
   );
 
   static OrderItem _item(OrderItemRow r) => OrderItem(
@@ -112,6 +114,8 @@ class DriftOrderRepository implements OrderRepository {
             status: OrderStatus.received.dbValue,
             note: Value(input.note),
             parentOrderId: Value(input.parentOrderId),
+            seasonId: Value(input.seasonId),
+            overbooked: Value(input.overbooked),
             createdAt: now,
             updatedAt: now,
           ),
@@ -599,6 +603,59 @@ class DriftOrderRepository implements OrderRepository {
     }
     await _rollUp(orderId);
   });
+
+  @override
+  Future<int> moveItems(Iterable<String> itemIds, OrderStatus to) {
+    if (to == OrderStatus.delivered) {
+      throw ArgumentError.value(to, 'to', 'use deliverAll for hand-over');
+    }
+    return _db.transaction(() async {
+      var moved = 0;
+      final orders = <String>{};
+      for (final id in itemIds) {
+        final item = await (_db.select(
+          _db.orderItem,
+        )..where((t) => t.id.equals(id))).getSingleOrNull();
+        if (item == null) continue;
+        final order = await (_db.select(
+          _db.customerOrder,
+        )..where((t) => t.id.equals(item.orderId))).getSingle();
+        if (order.cancelledAt != null || order.deletedAt != null) continue;
+        if (!OrderStatus.fromDb(item.status).canMoveTo(to)) continue;
+        await _moveItem(item, to);
+        orders.add(item.orderId);
+        moved++;
+      }
+      for (final orderId in orders) {
+        await _rollUp(orderId);
+      }
+      return moved;
+    });
+  }
+
+  @override
+  Future<OrderStatus?> advanceOrder(String orderId) =>
+      _db.transaction(() async {
+        final order = await (_db.select(
+          _db.customerOrder,
+        )..where((t) => t.id.equals(orderId))).getSingleOrNull();
+        if (order == null || order.cancelledAt != null) return null;
+        final items = await (_db.select(
+          _db.orderItem,
+        )..where((t) => t.orderId.equals(orderId))).get();
+        final current = OrderStatus.rollUp(
+          items.map((i) => OrderStatus.fromDb(i.status)),
+        );
+        final next = current.next;
+        if (next == null || next == OrderStatus.delivered) return null;
+        for (final item in items) {
+          if (OrderStatus.fromDb(item.status).index < next.index) {
+            await _moveItem(item, next);
+          }
+        }
+        await _rollUp(orderId);
+        return next;
+      });
 
   /// Throws [DueOutstandingError] if the order still has a balance (P-4).
   Future<void> _requireNoDue(String orderId) async {

@@ -656,5 +656,229 @@
   "searchCustomers": "Customers",
   "searchOrders": "Orders",
   "searchNothing": "Nothing found",
-  "filterNoMatch": "No orders match these filters"
+  "filterNoMatch": "No orders match these filters",
+  "rushSetupButton": "Set up a season",
+  "rushDaysLeft": "{count, plural, =0{Today is the day} =1{1 day left} other{{count} days left}}",
+  "@rushDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rushReadyBy": "Ready by {date}",
+  "@rushReadyBy": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "rushRoom": "{count, plural, =1{Room for about 1 more garment} other{Room for about {count} more garments}}",
+  "@rushRoom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rushFull": "Fully booked: stop taking orders for this date",
+  "rushOver": "Over capacity by about {count} garments",
+  "@rushOver": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rushCapacityLine": "{used} of {total} garments promised",
+  "@rushCapacityLine": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "rushNotCut": "{count} garments not yet cut",
+  "@rushNotCut": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rushByStage": "Garments by stage",
+  "rushTools": "Plan and track",
+  "rushOpenCalendar": "Load calendar",
+  "rushOpenCalendarSub": "See which days are full",
+  "rushOpenBatches": "Batch lists",
+  "rushOpenBatchesSub": "Cut, stitch and finish in batches",
+  "rushOpenList": "Rush list",
+  "rushOpenListSub": "One line per order, soonest first",
+  "rushEditSeason": "Edit season",
+  "rushSeasonOver": "No season is active. Set up the next one.",
+  "calTitle": "Load calendar",
+  "calLegendGreen": "Room to spare",
+  "calLegendAmber": "Nearly full",
+  "calLegendRed": "Overbooked",
+  "calClosed": "Closed",
+  "calSpare": "Spare: {count} garments",
+  "@calSpare": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "calOverBy": "Over by {count} garments",
+  "@calOverBy": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "calDueOn": "Due {date}",
+  "@calDueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "calNoOrders": "No orders due this day",
+  "calCapacityDay": "Capacity {count} per day",
+  "@calCapacityDay": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "batchTitle": "Batch lists",
+  "batchNothing": "Nothing in progress",
+  "batchNothingBody": "Garments from open orders will be grouped here by stage.",
+  "batchMove": "Move all to {stage}",
+  "@batchMove": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "batchConfirmTitle": "Move {count} {garment} to {stage}?",
+  "@batchConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "garment": {
+        "type": "String"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "batchMoved": "{count} moved",
+  "@batchMoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchOnlyDueByTarget": "Only orders due by {date}",
+  "@batchOnlyDueByTarget": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "batchGarmentsAt": "{count} garments",
+  "@batchGarmentsAt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rushListTitle": "Rush list",
+  "rushListHint": "Swipe right to move an order to its next stage",
+  "rushListMoved": "Order #{n} is now {stage}",
+  "@rushListMoved": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "rushListEmpty": "No open orders",
+  "rushListReady": "Ready: hand it over from the order",
+  "seasonSetupTitle": "Season",
+  "seasonKindEidFitr": "Eid-ul-Fitr",
+  "seasonKindEidAdha": "Eid-ul-Adha",
+  "seasonKindPuja": "Puja",
+  "seasonKindBoishakh": "Pohela Boishakh",
+  "seasonKindWedding": "Wedding season",
+  "seasonKindCustom": "Other",
+  "seasonKind": "Kind of season",
+  "seasonName": "Name",
+  "seasonTarget": "Everything ready by",
+  "seasonCapacity": "Garments you can make per day",
+  "seasonCapacityHelp": "Counted in standard garments: one Panjabi is 1.",
+  "seasonWorkingDays": "Working days",
+  "seasonClosedDates": "Days the shop is closed",
+  "seasonAddClosed": "Add a closed day",
+  "seasonWeights": "How much work each garment is",
+  "seasonWeightsHelp": "1 = a standard Panjabi. A blazer may be 2.5, a blouse 0.6.",
+  "seasonSave": "Save season",
+  "seasonRemove": "Remove season",
+  "seasonErrCapacity": "Enter garments per day, for example 20",
+  "seasonErrWeight": "Enter a number such as 1 or 0.6",
+  "seasonSaved": "Season saved",
+  "weekday1": "Mon",
+  "weekday2": "Tue",
+  "weekday3": "Wed",
+  "weekday4": "Thu",
+  "weekday5": "Fri",
+  "weekday6": "Sat",
+  "weekday7": "Sun",
+  "safeDateTitle": "Earliest safe date: {date}",
+  "@safeDateTitle": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "safeDateUse": "Use this date",
+  "safeDateNone": "No safe date before {season}. You can still take the order.",
+  "@safeDateNone": {
+    "placeholders": {
+      "season": {
+        "type": "String"
+      }
+    }
+  },
+  "safeDateOk": "This date has room.",
+  "safeDateFull": "This date is already full.",
+  "dateFullTitle": "This date is already full",
+  "dateFullBody": "{season} is booked up to this date. Take the order anyway?",
+  "@dateFullBody": {
+    "placeholders": {
+      "season": {
+        "type": "String"
+      }
+    }
+  },
+  "dateFullTake": "Take it anyway",
+  "overbookedBadge": "Over capacity"
 }

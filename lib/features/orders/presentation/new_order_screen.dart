@@ -20,6 +20,7 @@ import 'package:tailor_khata/features/orders/presentation/order_draft.dart';
 import 'package:tailor_khata/features/orders/presentation/order_labels.dart';
 import 'package:tailor_khata/features/orders/presentation/order_providers.dart';
 import 'package:tailor_khata/features/orders/presentation/photo_widgets.dart';
+import 'package:tailor_khata/features/rush/presentation/rush_providers.dart';
 import 'package:tailor_khata/l10n/gen/app_localizations.dart';
 
 /// New-order wizard: garments → measurements → details & price → delivery
@@ -119,6 +120,29 @@ class _NewOrderScreenState extends ConsumerState<NewOrderScreen> {
     }
   }
 
+  Future<bool> _confirmFullDate(String seasonName) async {
+    final l10n = AppL10n.of(context);
+    final take = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.dateFullTitle),
+        content: Text(l10n.dateFullBody(seasonName)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.actionGoBack),
+          ),
+          TextButton(
+            key: const ValueKey('date-full-take'),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.dateFullTake),
+          ),
+        ],
+      ),
+    );
+    return take ?? false;
+  }
+
   Future<bool> _confirmDiscard() async {
     final l10n = AppL10n.of(context);
     final discard = await showDialog<bool>(
@@ -171,14 +195,43 @@ class _NewOrderScreenState extends ConsumerState<NewOrderScreen> {
     setState(() => _error = null);
     if (_step < _steps - 1) {
       setState(() => _step++);
+      if (_step == _steps - 1) _suggestDeliveryDate();
       return;
     }
     await _save();
   }
 
+  /// With a season set up, start the delivery date at the earliest day the
+  /// plan has room for this order (E-5), unless the tailor already chose one.
+  void _suggestDeliveryDate() {
+    final draft = _draft!;
+    final plan = ref.read(rushPlanProvider);
+    if (plan == null || draft.deliveryTouched) return;
+    final safe = plan.safeDate(draft.workUnits);
+    if (safe != null) {
+      draft.deliveryDate = safe;
+      draft.changed();
+    }
+  }
+
   Future<void> _save() async {
     final draft = _draft!;
-    final order = draft.build(paidOn: ref.read(clockProvider).today());
+    final plan = ref.read(rushPlanProvider);
+    var overbooked = false;
+    if (plan != null && !plan.isSafe(draft.workUnits, draft.deliveryDate)) {
+      // One extra tap to take an order for a date that is already full.
+      if (!await _confirmFullDate(plan.season.name)) return;
+      overbooked = true;
+    }
+    final order = draft.build(
+      paidOn: ref.read(clockProvider).today(),
+      seasonId:
+          plan != null &&
+              draft.deliveryDate.compareTo(plan.season.targetDate) <= 0
+          ? plan.season.id
+          : null,
+      overbooked: overbooked,
+    );
     if (order == null) return;
     setState(() => _saving = true);
     final result = await ref.read(createOrderProvider)(order);
@@ -195,6 +248,8 @@ class _NewOrderScreenState extends ConsumerState<NewOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Keep the Eid-rush plan loaded while the wizard is open.
+    ref.watch(rushPlanProvider);
     final l10n = AppL10n.of(context);
     final bangla = ref.watch(useBanglaDigitsProvider);
     final draft = _draft;
@@ -386,7 +441,9 @@ class _GarmentsStep extends ConsumerWidget {
                   ),
                   Text(
                     DigitFormatter.format('${item.qty}', bangla: bangla),
-                    key: ValueKey('qty-${item.garment.key}'),
+                    key: ValueKey(
+                      'qty-${item.garment.key}${draft.keySuffix(item)}',
+                    ),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   IconButton(
@@ -477,7 +534,9 @@ class _MeasurementsStep extends ConsumerWidget {
                     Text(l10n.noMeasurementsYet),
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
-                      key: ValueKey('take-${item.garment.key}'),
+                      key: ValueKey(
+                        'take-${item.garment.key}${draft.keySuffix(item)}',
+                      ),
                       onPressed: () => _edit(context, ref, item),
                       icon: const Icon(Icons.straighten),
                       label: Text(l10n.takeNow),
@@ -517,7 +576,9 @@ class _MeasurementsStep extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: FilledButton.tonalIcon(
-                            key: ValueKey('keep-${item.garment.key}'),
+                            key: ValueKey(
+                              'keep-${item.garment.key}${draft.keySuffix(item)}',
+                            ),
                             onPressed: () {
                               item
                                 ..measurement = item.latest
@@ -534,7 +595,9 @@ class _MeasurementsStep extends ConsumerWidget {
                         ),
                         const SizedBox(width: 8),
                         OutlinedButton(
-                          key: ValueKey('edit-${item.garment.key}'),
+                          key: ValueKey(
+                            'edit-${item.garment.key}${draft.keySuffix(item)}',
+                          ),
                           onPressed: () => _edit(context, ref, item),
                           child: Text(l10n.editMeasurements),
                         ),
@@ -594,7 +657,7 @@ class _DetailsStep extends ConsumerWidget {
                         for (final option in group.options)
                           ChoiceChip(
                             key: ValueKey(
-                              'style-${item.garment.key}-${group.key}-${option.key}',
+                              'style-${item.garment.key}${draft.keySuffix(item)}-${group.key}-${option.key}',
                             ),
                             label: Text(option.label(lang)),
                             selected: item.style[group.key] == option.key,
@@ -645,7 +708,9 @@ class _DetailsStep extends ConsumerWidget {
                   DraftPhotosSection(item: item, draft: draft),
                   const SizedBox(height: 12),
                   TextFormField(
-                    key: ValueKey('price-${item.garment.key}'),
+                    key: ValueKey(
+                      'price-${item.garment.key}${draft.keySuffix(item)}',
+                    ),
                     initialValue: item.priceText,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -703,9 +768,11 @@ class _DeliveryStep extends ConsumerWidget {
       ),
     );
 
+    final plan = ref.watch(rushPlanProvider);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        if (plan != null) _SafeDateCard(draft: draft, plan: plan),
         ListTile(
           key: const ValueKey('delivery-date'),
           contentPadding: EdgeInsets.zero,
@@ -719,6 +786,7 @@ class _DeliveryStep extends ConsumerWidget {
             final d = await _pick(context, ref, draft.deliveryDate);
             if (d != null) {
               draft.deliveryDate = d;
+              draft.deliveryTouched = true;
               draft.changed();
             }
           },
@@ -836,6 +904,69 @@ class _DeliveryStep extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The plan's advice for the delivery date of this order (E-5).
+class _SafeDateCard extends ConsumerWidget {
+  const _SafeDateCard({required this.draft, required this.plan});
+
+  final OrderDraft draft;
+  final RushPlan plan;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppL10n.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
+    final theme = Theme.of(context);
+    final bangla = ref.watch(useBanglaDigitsProvider);
+    final units = draft.workUnits;
+    final safe = plan.safeDate(units);
+    final chosenOk = plan.isSafe(units, draft.deliveryDate);
+    String d(String s) => DigitFormatter.format(s, bangla: bangla);
+
+    return Card(
+      key: const ValueKey('safe-date-card'),
+      color: chosenOk
+          ? theme.colorScheme.secondaryContainer
+          : theme.colorScheme.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              safe == null
+                  ? d(l10n.safeDateNone(plan.season.name))
+                  : d(l10n.safeDateTitle(formatStoredDate(safe, lang))),
+              key: const ValueKey('safe-date-title'),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              chosenOk ? l10n.safeDateOk : l10n.safeDateFull,
+              key: const ValueKey('safe-date-status'),
+              style: theme.textTheme.bodyMedium,
+            ),
+            if (safe != null && safe != draft.deliveryDate)
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: TextButton(
+                  key: const ValueKey('safe-date-use'),
+                  onPressed: () {
+                    draft.deliveryDate = safe;
+                    draft.deliveryTouched = true;
+                    draft.changed();
+                  },
+                  child: Text(l10n.safeDateUse),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

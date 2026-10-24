@@ -176,7 +176,7 @@ class DraftPhotosSection extends ConsumerWidget {
             ),
           ),
         PhotoAddButtons(
-          keyPrefix: '${item.garment.key}-',
+          keyPrefix: '${item.garment.key}${draft.keySuffix(item)}-',
           onPick: (origin) => _pick(context, ref, origin),
         ),
       ],

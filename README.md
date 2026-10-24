@@ -11,6 +11,7 @@ Docs: [feature spec](docs/feature-spec.md) · [technical design](docs/technical-
 | S0 Foundations | Done (S0-12 cold-start baseline on a real phone still to do) |
 | S1 Customers + measurement capture | Done: customer book with FTS search, templates for 7 garments, fast keypad, append-only versioned measurements |
 | S3 Orders + payments | Done, including photo attachments and the cutting slip (shared as a picture, not a PDF): order wizard, status pipeline, advance/due, payments, cancel, duplicate, dues list |
+| S5 Eid-rush | Done (P0): season setup, capacity engine, countdown board, load calendar, safe-date suggestion in the order wizard, batch lists, rush list. P1 items (production board, at-risk list, rush-day cash summary) and the tailor usability session are left for v1.1 |
 | S4 Deliveries, reminders, dashboard | Done: dashboard, delivery tabs, guarded delivery, customer messages (SMS/WhatsApp), local reminders, filters and search |
 | S2 Measurement history | Done except S2-10 (PDF/image export) and S2-12 (tailor usability session): timeline, compare, trend, error flag, fit result, change prompts |
 
@@ -74,6 +75,8 @@ test/
 - Reminders: local notifications the evening before and the morning of delivery days (grouped per day) plus a daily overdue nudge. Times are set in More → Reminders; the schedule is rebuilt at app start and whenever orders change. The Home screen is the source of truth if the phone suppresses notifications.
 - Photos and slips: attach design photos to each garment (camera or gallery; stored compressed in the app's private folder). The cutting slip combines order, style, exact measurements and photos on one page and is shared as a picture.
 - Search: Home search finds customers and orders; the Orders tab filters by status, balance, garment and delivery dates.
+
+- Eid-rush: set up a season (kind, deadline, garments per day, days off and closed dates, and how much work each garment is: a blazer 2.5, a blouse 0.6). The Rush tab shows days left, how many more garments fit, and garments by stage. The load calendar colours each day by how full the plan is (judged cumulatively, because garments are made before their due day). New orders get the earliest safe delivery date pre-filled; taking an order for a full date needs one confirmation and tags it "Over capacity". Batch lists group garments by stage and type ("37 Panjabi to cut") with one-tap moves; the rush list is one big line per order and swiping right moves it along.
 
 ## Debug tools
 

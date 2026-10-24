@@ -17,6 +17,7 @@ Future<void> seedBuiltInTemplates(AppDatabase db) async {
           labelBn: template.bn,
           isBuiltin: const Value(true),
           sortOrder: Value(i),
+          workUnits: Value(template.workUnits),
         ),
         mode: InsertMode.insertOrIgnore,
       );

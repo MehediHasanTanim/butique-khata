@@ -218,6 +218,12 @@ class _OrderDetailView extends ConsumerWidget {
                       )
                     else
                       StatusChip(order.status),
+                    if (order.overbooked && order.isOpen)
+                      Chip(
+                        key: const ValueKey('overbooked-chip'),
+                        label: Text(l10n.overbookedBadge),
+                        backgroundColor: theme.colorScheme.tertiaryContainer,
+                      ),
                     if (order.urgent && order.isOpen)
                       Chip(
                         label: Text(l10n.urgentBadge),

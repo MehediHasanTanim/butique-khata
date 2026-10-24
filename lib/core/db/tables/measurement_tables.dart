@@ -13,6 +13,10 @@ class GarmentType extends Table {
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   BoolColumn get archived => boolean().withDefault(const Constant(false))();
 
+  /// How much of the shop's capacity one garment uses, ×100 (Panjabi = 100,
+  /// blouse 60, blazer 250). Used by the Eid-rush planning.
+  IntColumn get workUnits => integer().withDefault(const Constant(100))();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

@@ -37,6 +37,7 @@ class DriftMeasurementRepository implements MeasurementRepository {
             key: type.key,
             labelEn: type.labelEn,
             labelBn: type.labelBn,
+            workUnits: type.workUnits,
             fields: [
               for (final f in fields.where((f) => f.garmentTypeId == type.id))
                 FieldTemplate(

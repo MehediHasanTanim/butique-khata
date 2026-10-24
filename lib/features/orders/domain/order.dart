@@ -149,7 +149,15 @@ class Order {
     this.parentOrderId,
     this.cancelledAt,
     this.cancelReason,
+    this.seasonId,
+    this.overbooked = false,
   });
+
+  /// Season this order was planned for.
+  final String? seasonId;
+
+  /// Taken for a date the plan said was already full.
+  final bool overbooked;
 
   final String id;
   final int number;
@@ -297,7 +305,12 @@ class NewOrder {
     this.note,
     this.advance,
     this.parentOrderId,
+    this.seasonId,
+    this.overbooked = false,
   });
+
+  final String? seasonId;
+  final bool overbooked;
 
   final String customerId;
   final String deliveryDate;

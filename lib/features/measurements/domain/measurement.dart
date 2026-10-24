@@ -61,6 +61,7 @@ class GarmentInfo {
     required this.labelEn,
     required this.labelBn,
     required this.fields,
+    this.workUnits = 100,
   });
 
   final String id;
@@ -68,6 +69,9 @@ class GarmentInfo {
   final String labelEn;
   final String labelBn;
   final List<FieldTemplate> fields;
+
+  /// Capacity one garment of this type uses, ×100 (standard garment = 100).
+  final int workUnits;
 
   String label(String languageCode) => languageCode == 'bn' ? labelBn : labelEn;
 }

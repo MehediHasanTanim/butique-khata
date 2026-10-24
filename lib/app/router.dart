@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tailor_khata/app/home_shell.dart';
-import 'package:tailor_khata/app/placeholder_screens.dart';
 import 'package:tailor_khata/app/routes.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_form_screen.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_list_screen.dart';
@@ -19,6 +18,11 @@ import 'package:tailor_khata/features/orders/presentation/cutting_slip.dart';
 import 'package:tailor_khata/features/orders/presentation/new_order_screen.dart';
 import 'package:tailor_khata/features/orders/presentation/order_detail_screen.dart';
 import 'package:tailor_khata/features/orders/presentation/orders_screen.dart';
+import 'package:tailor_khata/features/rush/presentation/batch_lists_screen.dart';
+import 'package:tailor_khata/features/rush/presentation/load_calendar_screen.dart';
+import 'package:tailor_khata/features/rush/presentation/rush_list_screen.dart';
+import 'package:tailor_khata/features/rush/presentation/rush_screen.dart';
+import 'package:tailor_khata/features/rush/presentation/season_setup_screen.dart';
 import 'package:tailor_khata/features/settings/presentation/messages_screen.dart';
 import 'package:tailor_khata/features/settings/presentation/more_screen.dart';
 import 'package:tailor_khata/features/settings/presentation/reminders_screen.dart';
@@ -115,6 +119,27 @@ GoRouter buildRouter({String initialLocation = AppRoutes.home}) => GoRouter(
       path: AppRoutes.settingsMessages,
       parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) => const MessagesScreen(),
+    ),
+    GoRoute(
+      path: '/rush/setup',
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) =>
+          SeasonSetupScreen(seasonId: state.uri.queryParameters['id']),
+    ),
+    GoRoute(
+      path: AppRoutes.rushCalendar,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const LoadCalendarScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.rushBatches,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const BatchListsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.rushList,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const RushListScreen(),
     ),
     GoRoute(
       path: AppRoutes.search,

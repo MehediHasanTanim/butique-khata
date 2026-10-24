@@ -4,7 +4,9 @@ import 'package:tailor_khata/core/db/tables/attachment_tables.dart';
 import 'package:tailor_khata/core/db/tables/customer_tables.dart';
 import 'package:tailor_khata/core/db/tables/measurement_tables.dart';
 import 'package:tailor_khata/core/db/tables/order_tables.dart';
+import 'package:tailor_khata/core/db/tables/season_tables.dart';
 import 'package:tailor_khata/core/db/template_seeder.dart';
+import 'package:tailor_khata/features/measurements/domain/built_in_templates.dart';
 
 part 'app_database.g.dart';
 
@@ -43,13 +45,14 @@ class AuditLog extends Table {
     OrderItem,
     Payment,
     Attachment,
+    Season,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   /// Bump together with a new `fromXToY` step in [migration] (TD §9).
-  static const int currentSchemaVersion = 4;
+  static const int currentSchemaVersion = 5;
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -90,6 +93,23 @@ class AppDatabase extends _$AppDatabase {
       if (from < 4) {
         await m.createTable(attachment);
         await m.createIndex(idxAttachmentOwner);
+      }
+      if (from < 5) {
+        await m.createTable(season);
+        // Tables created earlier in this same upgrade (from < 2 or < 3) were
+        // built from today's definition and already have the new columns.
+        if (from >= 2) await m.addColumn(garmentType, garmentType.workUnits);
+        if (from >= 3) {
+          await m.addColumn(customerOrder, customerOrder.seasonId);
+          await m.addColumn(customerOrder, customerOrder.overbooked);
+        }
+        // Built-in garments get their standard capacity weights.
+        for (final template in BuiltInTemplates.all) {
+          await customStatement(
+            'UPDATE garment_type SET work_units = ? WHERE id = ?',
+            [template.workUnits, template.id],
+          );
+        }
       }
     },
     beforeOpen: (details) async {

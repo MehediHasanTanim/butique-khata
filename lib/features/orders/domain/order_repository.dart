@@ -73,6 +73,17 @@ abstract class OrderRepository {
     bool dueConfirmed = false,
   });
 
+  /// Moves every listed garment line to [to] in one transaction (batch
+  /// update, E-8). Lines of cancelled orders, and lines that cannot make that
+  /// move, are skipped. Returns how many moved. Delivering is not allowed
+  /// here: use [deliverAll] so a balance is never skipped.
+  Future<int> moveItems(Iterable<String> itemIds, OrderStatus to);
+
+  /// Moves the lagging garments of an order up to the next stage (the swipe
+  /// on the rush list, E-11). Returns the order's new stage, or null when it
+  /// is already ready or cancelled (hand-over has its own guarded path).
+  Future<OrderStatus?> advanceOrder(String orderId);
+
   /// Hands the whole order over. With [collect] the money is recorded in the
   /// same transaction, so a failure leaves neither half done.
   Future<void> deliverAll(

@@ -43,4 +43,10 @@ abstract class AppRoutes {
   static const search = '/search';
   static const settingsReminders = '/more/reminders';
   static const settingsMessages = '/more/messages';
+
+  static String rushSetup({String? seasonId}) =>
+      '/rush/setup${seasonId == null ? '' : '?id=$seasonId'}';
+  static const rushCalendar = '/rush/calendar';
+  static const rushBatches = '/rush/batches';
+  static const rushList = '/rush/list';
 }

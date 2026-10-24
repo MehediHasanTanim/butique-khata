@@ -39,6 +39,10 @@ class OrderDraft extends ChangeNotifier {
   final List<DraftItem> items = [];
 
   String deliveryDate;
+
+  /// True once the tailor picked the date themselves (so a suggestion no
+  /// longer overwrites it).
+  bool deliveryTouched = false;
   String? trialDate;
   bool urgent = false;
   String discountText = '';
@@ -48,6 +52,17 @@ class OrderDraft extends ChangeNotifier {
   String? parentOrderId;
 
   void changed() => notifyListeners();
+
+  /// Distinguishes two lines of the same garment in widget keys: empty for the
+  /// first, `-2` for the second, and so on.
+  String keySuffix(DraftItem item) {
+    final index = items.indexOf(item);
+    final earlier = items
+        .take(index < 0 ? 0 : index)
+        .where((other) => other.garment.id == item.garment.id)
+        .length;
+    return earlier == 0 ? '' : '-${earlier + 1}';
+  }
 
   void addItem(DraftItem item) {
     items.add(item);
@@ -76,7 +91,16 @@ class OrderDraft extends ChangeNotifier {
   Money get due => total - (advance ?? Money.zero);
 
   /// Order ready to hand to `CreateOrder`; null if prices/amounts are bad.
-  NewOrder? build({required String paidOn}) {
+  /// Capacity this order uses, ×100 (garment weight × quantity), for the
+  /// Eid-rush planning.
+  int get workUnits =>
+      items.fold(0, (sum, i) => sum + i.garment.workUnits * i.qty);
+
+  NewOrder? build({
+    required String paidOn,
+    String? seasonId,
+    bool overbooked = false,
+  }) {
     final discount = this.discount;
     final advance = this.advance;
     if (discount == null || advance == null || !pricesComplete) return null;
@@ -88,6 +112,8 @@ class OrderDraft extends ChangeNotifier {
       urgent: urgent,
       note: note.trim().isEmpty ? null : note.trim(),
       parentOrderId: parentOrderId,
+      seasonId: seasonId,
+      overbooked: overbooked,
       items: [
         for (final i in items)
           NewOrderItem(
@@ -100,6 +126,7 @@ class OrderDraft extends ChangeNotifier {
             style: i.style,
             note: i.note.trim().isEmpty ? null : i.note.trim(),
             photos: List.of(i.photos),
+            workUnits: i.garment.workUnits,
           ),
       ],
       advance: advance.isZero

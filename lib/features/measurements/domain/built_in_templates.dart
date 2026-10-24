@@ -17,7 +17,16 @@ class FieldDef {
 }
 
 class GarmentTemplate {
-  const GarmentTemplate(this.key, this.en, this.bn, this.fields);
+  const GarmentTemplate(
+    this.key,
+    this.en,
+    this.bn,
+    this.fields, {
+    this.workUnits = 100,
+  });
+
+  /// Capacity one garment uses, ×100 (standard Panjabi = 100).
+  final int workUnits;
 
   final String key;
   final String en;
@@ -83,7 +92,7 @@ class BuiltInTemplates {
       _sleeve,
       _cuff,
       _collar,
-    ]),
+    ], workUnits: 80),
     GarmentTemplate('pant', 'Pant / Trouser', 'প্যান্ট', [
       FieldDef('length', 'Length', 'লম্বা', 25, 50),
       FieldDef('waist', 'Waist', 'কোমর', 20, 60),
@@ -93,14 +102,14 @@ class BuiltInTemplates {
       FieldDef('bottom', 'Bottom', 'মুহরি', 5, 30),
       FieldDef('rise', 'Rise', 'রাইজ', 6, 18),
       FieldDef('fly', 'Fly', 'ফ্লাই', 4, 12),
-    ]),
+    ], workUnits: 80),
     GarmentTemplate('pajama', 'Pajama', 'পায়জামা', [
       FieldDef('length', 'Length', 'লম্বা', 25, 50),
       FieldDef('waist', 'Waist', 'কোমর', 20, 60),
       _hip,
       _thigh,
       FieldDef('bottom', 'Bottom', 'মুহরি', 5, 30),
-    ]),
+    ], workUnits: 50),
     GarmentTemplate('blazer', 'Blazer / Coat', 'ব্লেজার', [
       _length,
       _chest,
@@ -108,7 +117,7 @@ class BuiltInTemplates {
       _shoulder,
       _sleeve,
       FieldDef('back', 'Back', 'পিঠ', 10, 30),
-    ]),
+    ], workUnits: 250),
     GarmentTemplate('salwar_kameez', 'Salwar Kameez', 'সালোয়ার কামিজ', [
       FieldDef('kameez_length', 'Kameez length', 'কামিজ লম্বা', 25, 60),
       FieldDef('chest', 'Chest / Bust', 'বুক', 20, 60),
@@ -123,7 +132,7 @@ class BuiltInTemplates {
       FieldDef('salwar_waist', 'Salwar waist', 'সালোয়ার কোমর', 20, 60),
       FieldDef('salwar_hip', 'Salwar hip', 'সালোয়ার হিপ', 20, 65),
       FieldDef('salwar_bottom', 'Salwar bottom', 'সালোয়ার মুহরি', 5, 30),
-    ]),
+    ], workUnits: 150),
     GarmentTemplate('blouse', 'Blouse', 'ব্লাউজ', [
       _length,
       FieldDef('bust', 'Bust', 'বাস্ট', 20, 60),
@@ -134,7 +143,7 @@ class BuiltInTemplates {
       _neckFront,
       _neckBack,
       FieldDef('dart_point', 'Dart point', 'ডার্ট পয়েন্ট', 5, 15),
-    ]),
+    ], workUnits: 60),
   ];
 
   static GarmentTemplate byKey(String key) =>
