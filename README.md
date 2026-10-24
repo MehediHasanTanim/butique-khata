@@ -13,7 +13,7 @@ Docs: [feature spec](docs/feature-spec.md) · [technical design](docs/technical-
 | S3 Orders + payments | Done, including photo attachments and the cutting slip (shared as a picture, not a PDF): order wizard, status pipeline, advance/due, payments, cancel, duplicate, dues list |
 | S5 Eid-rush | Done (P0): season setup, capacity engine, countdown board, load calendar, safe-date suggestion in the order wizard, batch lists, rush list. P1 items (production board, at-risk list, rush-day cash summary) and the tailor usability session are left for v1.1 |
 | S4 Deliveries, reminders, dashboard | Done: dashboard, delivery tabs, guarded delivery, customer messages (SMS/WhatsApp), local reminders, filters and search |
-| S6 Backup, security, hardening | Done except Google Drive upload (S6-02), scheduled background backup (S6-03) and beta distribution (S6-11); see notes below. Encrypted backup and restore, app lock, recently-deleted recovery, CSV export, query-plan and performance checks, accessibility and translation audit |
+| S6 Backup, security, hardening | Done except scheduled background backup (S6-03, opportunistic instead) and beta distribution (S6-11); Google Drive copy is built but needs the release OAuth client; see notes below. Encrypted backup and restore, app lock, recently-deleted recovery, CSV export, query-plan and performance checks, accessibility and translation audit |
 | S2 Measurement history | Done except S2-10 (PDF/image export) and S2-12 (tailor usability session): timeline, compare, trend, error flag, fit result, change prompts |
 
 ## Setup
@@ -92,7 +92,7 @@ In debug builds, **More → Developer tools** generates synthetic Bangla/English
 
 ### Sprint 6 notes
 
-- **Google Drive (S6-02) is not built.** It needs a Google Cloud project, OAuth consent and the app's signing certificate, which cannot be set up from the repository. The backup file can be shared to Drive (or anywhere) from the share sheet and restored from any file picker, which covers the "local-file fallback" the plan allows.
+- **Google Drive (S6-02)** is optional: More → Backup & restore → "Also copy backups to Google Drive" signs in with Google and copies every backup (manual and automatic) to Drive's hidden app-data folder (scope `drive.appdata` only; the newest five are kept). "Restore from Google Drive" lists them. Files are already encrypted, so Google holds only ciphertext. Set-up lives in Google Cloud project "Tailor Khata" (`trusty-wavelet-512609-d1`): Drive API enabled, consent screen External in Testing mode with the owner as test user, and an Android OAuth client for `com.tailorkhata.app.dev` with the debug-keystore SHA-1. **Before release:** add an Android client for `com.tailorkhata.app` with the release (or Play App Signing) SHA-1, and publish the consent screen (the app-data scope needs no Google verification). The sign-in itself has not been tried on a physical phone.
 - **Scheduled backup (S6-03) is opportunistic**, not WorkManager: it runs when the app opens or returns to the foreground and the last backup is over a day old. A phone that is never opened is not backed up, which the Home warning makes visible.
 - **S6-11 (beta distribution, crash reporting, feedback form)** is not done; it needs a Play Console track and a reporting backend.
 - Performance and query-plan checks run on a desktop SQLite with 10,000 customers and 50,000 orders (`test/core/query_plan_test.dart`). The reference-device cold-start and frame-time measurements still need a real phone, as does the backup, wipe, restore round trip on hardware.

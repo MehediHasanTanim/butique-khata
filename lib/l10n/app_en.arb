@@ -1023,5 +1023,25 @@
   "exportTitle": "Export to spreadsheet",
   "exportSubtitle": "Customers, orders, payments and measurements as CSV",
   "exportWorking": "Preparing the files…",
-  "exportFailed": "Could not export. Please try again."
+  "exportFailed": "Could not export. Please try again.",
+  "driveTitle": "Google Drive",
+  "driveAuto": "Also copy backups to Google Drive",
+  "driveAutoSubtitle": "Kept in a hidden app folder. Only you can open the files, and they are locked with your passphrase.",
+  "driveConnectedAs": "Connected: {email}",
+  "@driveConnectedAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "driveRestore": "Restore from Google Drive",
+  "driveChoose": "Choose a backup",
+  "driveEmpty": "No backups in Google Drive yet",
+  "driveUploaded": "Copied to Google Drive",
+  "driveWorking": "Talking to Google Drive…",
+  "driveErrSignIn": "Could not sign in to Google. Nothing was changed.",
+  "driveErrNetwork": "Could not reach Google Drive. Check the internet and try again.",
+  "driveErrRejected": "Google Drive refused the request. Try again later.",
+  "driveSavedLocalOnly": "Backup saved on this phone, but the copy to Google Drive failed."
 }

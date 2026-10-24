@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import 'package:tailor_khata/core/l10n/digit_formatter.dart';
 import 'package:tailor_khata/core/ui/app_list_tile.dart';
 import 'package:tailor_khata/core/ui/primary_button.dart';
 import 'package:tailor_khata/core/ui/section_header.dart';
+import 'package:tailor_khata/features/backup/data/drive_backup_store.dart';
 import 'package:tailor_khata/features/backup/domain/backup_models.dart';
 import 'package:tailor_khata/features/backup/presentation/backup_providers.dart';
 import 'package:tailor_khata/l10n/gen/app_localizations.dart';
@@ -81,9 +83,21 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     setState(() => _busy = true);
     try {
       final result = await service.createBackup();
+      final drive = await copyToDriveIfEnabled(
+        settings: ref.read(settingsRepositoryProvider),
+        store: ref.read(driveStoreProvider),
+        file: result.file,
+      );
       ref.read(backupRevisionProvider.notifier).bump();
       if (mounted) {
-        _say(l10n.backupDone(formatBytes(result.sizeBytes, bangla: bangla)));
+        final done = l10n.backupDone(
+          formatBytes(result.sizeBytes, bangla: bangla),
+        );
+        _say(switch (drive) {
+          false => l10n.driveSavedLocalOnly,
+          true => '$done. ${l10n.driveUploaded}',
+          null => done,
+        });
       }
     } on BackupFailure catch (failure) {
       if (mounted) _say(backupFailureText(l10n, failure));
@@ -96,9 +110,106 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     final service = ref.read(backupServiceProvider);
     final env = ref.read(backupEnvironmentProvider);
     if (service == null || env == null) return;
-    final l10n = AppL10n.of(context);
     final file = await ref.read(backupFilePickerProvider).pick();
     if (file == null || !mounted) return;
+    await _restoreFrom(file);
+  }
+
+  String _driveError(AppL10n l10n, DriveException e) => switch (e.error) {
+    DriveError.notSignedIn => l10n.driveErrSignIn,
+    DriveError.network => l10n.driveErrNetwork,
+    DriveError.rejected => l10n.driveErrRejected,
+  };
+
+  Future<void> _toggleDrive(bool on) async {
+    final l10n = AppL10n.of(context);
+    final settings = ref.read(settingsRepositoryProvider);
+    final auth = ref.read(driveAuthProvider);
+    if (on) {
+      // Sign in first: the switch only turns on if Google said yes.
+      final headers = await auth.headers(interactive: true);
+      if (headers == null) {
+        if (mounted) _say(l10n.driveErrSignIn);
+        return;
+      }
+      await settings.write(driveEnabledKey, 'true');
+    } else {
+      await settings.write(driveEnabledKey, 'false');
+      await auth.signOut();
+    }
+    ref.read(backupRevisionProvider.notifier).bump();
+  }
+
+  Future<void> _restoreFromDrive() async {
+    final l10n = AppL10n.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
+    final bangla = ref.read(useBanglaDigitsProvider);
+    final store = ref.read(driveStoreProvider);
+    setState(() => _busy = true);
+    List<DriveBackup> backups;
+    try {
+      backups = await store.list(interactive: true);
+    } on DriveException catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        _say(_driveError(l10n, e));
+      }
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (backups.isEmpty) {
+      _say(l10n.driveEmpty);
+      return;
+    }
+    final chosen = await showModalBottomSheet<DriveBackup>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            ListTile(title: Text(l10n.driveChoose)),
+            for (var i = 0; i < backups.length; i++)
+              ListTile(
+                key: ValueKey('drive-backup-$i'),
+                leading: const Icon(Icons.cloud_outlined),
+                title: Text(formatBackupTime(backups[i].modified, lang)),
+                subtitle: Text(
+                  formatBytes(backups[i].sizeBytes, bangla: bangla),
+                ),
+                onTap: () => Navigator.pop(context, backups[i]),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (chosen == null || !mounted) return;
+
+    final temp = Directory.systemTemp.createTempSync('tk_drive_restore');
+    final file = File('${temp.path}/${chosen.name}');
+    setState(() => _busy = true);
+    try {
+      await store.download(chosen.id, file);
+    } on DriveException catch (e) {
+      if (mounted) _say(_driveError(l10n, e));
+      temp.deleteSync(recursive: true);
+      if (mounted) setState(() => _busy = false);
+      return;
+    }
+    if (mounted) setState(() => _busy = false);
+    try {
+      if (mounted) await _restoreFrom(file);
+    } finally {
+      if (temp.existsSync()) temp.deleteSync(recursive: true);
+    }
+  }
+
+  /// Passphrase, last warning, restore, restart (shared by file and Drive).
+  Future<void> _restoreFrom(File file) async {
+    final service = ref.read(backupServiceProvider);
+    final env = ref.read(backupEnvironmentProvider);
+    if (service == null || env == null) return;
+    final l10n = AppL10n.of(context);
     final passphrase = await showDialog<String>(
       context: context,
       builder: (_) => const RestorePassphraseDialog(),
@@ -196,6 +307,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     final auto = ref.watch(backupAutoEnabledProvider).value ?? true;
     final service = ref.watch(backupServiceProvider);
     final hasKey = status?.hasKey ?? false;
+    final driveOn = ref.watch(driveEnabledProvider).value ?? false;
+    final driveEmail = ref.watch(driveEmailProvider).value;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.backupTitle)),
@@ -251,6 +364,18 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                 ref.read(backupRevisionProvider.notifier).bump();
               },
             ),
+            SwitchListTile(
+              key: const ValueKey('drive-enable'),
+              secondary: const Icon(Icons.cloud_upload_outlined),
+              title: Text(l10n.driveAuto),
+              subtitle: Text(
+                driveOn && driveEmail != null
+                    ? l10n.driveConnectedAs(driveEmail)
+                    : l10n.driveAutoSubtitle,
+              ),
+              value: driveOn,
+              onChanged: _busy ? null : _toggleDrive,
+            ),
             AppListTile(
               key: const ValueKey('backup-change-passphrase'),
               title: l10n.backupChangePassphrase,
@@ -287,6 +412,12 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               subtitle: l10n.backupRestoreSubtitle,
               leading: const Icon(Icons.restore),
               onTap: _busy ? null : _restore,
+            ),
+            AppListTile(
+              key: const ValueKey('drive-restore'),
+              title: l10n.driveRestore,
+              leading: const Icon(Icons.cloud_download_outlined),
+              onTap: _busy ? null : _restoreFromDrive,
             ),
           ],
         ],

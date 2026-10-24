@@ -57,7 +57,13 @@ class _TailorKhataAppState extends ConsumerState<TailorKhataApp>
   Future<void> _housekeeping() async {
     try {
       final backups = ref.read(backupServiceProvider);
-      if (backups != null && await backups.maybeAutoBackup() != null) {
+      final made = backups == null ? null : await backups.maybeAutoBackup();
+      if (made != null) {
+        await copyToDriveIfEnabled(
+          settings: ref.read(settingsRepositoryProvider),
+          store: ref.read(driveStoreProvider),
+          file: made.file,
+        );
         ref.read(backupRevisionProvider.notifier).bump();
       }
       await ref

@@ -12,6 +12,7 @@ import 'package:tailor_khata/features/backup/presentation/backup_providers.dart'
 import 'package:tailor_khata/features/settings/data/settings_repository.dart';
 
 import '../../support/backup_fixture.dart';
+import '../../support/drive_fakes.dart';
 import '../../support/shop_fixture.dart';
 import '../../support/test_app.dart';
 
@@ -57,6 +58,8 @@ void main() {
     bool withKey = false,
     bool autoOff = true,
     DateTime? lastBackup,
+    List<Override> more = const [],
+    bool driveOn = false,
   }) async {
     tmp = Directory.systemTemp.createTempSync('tk_backup_ui');
     addTearDown(() {
@@ -81,6 +84,9 @@ void main() {
         if (autoOff) {
           await settings.write(BackupService.keyAutoEnabled, 'false');
         }
+        if (driveOn) {
+          await settings.write(driveEnabledKey, 'true');
+        }
         if (lastBackup != null) {
           await settings.write(
             BackupService.keyLastAt,
@@ -102,6 +108,7 @@ void main() {
         backupKeyStoreProvider.overrideWithValue(keys),
         backupFilePickerProvider.overrideWithValue(picker),
         appRestartProvider.overrideWithValue(() => restarts++),
+        ...more,
       ],
     );
   }
@@ -532,6 +539,214 @@ void main() {
       await tester.pumpAndSettle();
       expect(restarts, 0);
       expect(File('${tmp.path}/live.db').existsSync(), isFalse);
+      await shutDown(tester, shopDb);
+    });
+  });
+
+  group('Google Drive copy (S6-02)', () {
+    late FakeDrive drive;
+    late FakeDriveAuth auth;
+
+    List<Override> driveOverrides() {
+      drive = FakeDrive();
+      auth = FakeDriveAuth();
+      return [
+        driveAuthProvider.overrideWithValue(auth),
+        driveStoreProvider.overrideWithValue(drive.store(auth)),
+      ];
+    }
+
+    testWidgets('turning it on signs in and shows the account', (tester) async {
+      await openBackup(tester, withKey: true, more: driveOverrides());
+      await tapKeyed(tester, 'drive-enable');
+      await settleIo(tester, rounds: 3);
+      expect(auth.interactiveCalls, contains(true));
+      expect(find.text('Connected: me@example.com'), findsOneWidget);
+      expect(
+        await tester.runAsync(
+          () => SettingsRepository(shopDb).read(driveEnabledKey),
+        ),
+        'true',
+      );
+      await shutDown(tester, shopDb);
+    });
+
+    testWidgets('a refused sign-in leaves it off', (tester) async {
+      await openBackup(tester, withKey: true, more: driveOverrides());
+      auth.signedIn = false;
+      await tapKeyed(tester, 'drive-enable');
+      await settleIo(tester, rounds: 3);
+      expect(
+        find.text('Could not sign in to Google. Nothing was changed.'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<SwitchListTile>(find.byKey(const ValueKey('drive-enable')))
+            .value,
+        isFalse,
+      );
+      await shutDown(tester, shopDb);
+    });
+
+    testWidgets('turning it off signs out', (tester) async {
+      await openBackup(
+        tester,
+        withKey: true,
+        driveOn: true,
+        more: driveOverrides(),
+      );
+      await tapKeyed(tester, 'drive-enable');
+      await settleIo(tester, rounds: 3);
+      expect(auth.signedOut, isTrue);
+      expect(
+        tester
+            .widget<SwitchListTile>(find.byKey(const ValueKey('drive-enable')))
+            .value,
+        isFalse,
+      );
+      await shutDown(tester, shopDb);
+    });
+
+    testWidgets('backing up also copies to Drive', (tester) async {
+      await openBackup(
+        tester,
+        withKey: true,
+        driveOn: true,
+        more: driveOverrides(),
+      );
+      await tapNoSettle(tester, 'backup-now');
+      await backupListed(tester);
+      await settleIo(tester, until: () => drive.files.isNotEmpty);
+      expect(drive.files, hasLength(1));
+      expect(drive.files.values.single.name, endsWith('.tkbackup'));
+      expect(
+        drive.files.values.single.bytes,
+        backupFileOnDisk(0).readAsBytesSync(),
+      );
+      expect(find.textContaining('Copied to Google Drive'), findsOneWidget);
+      await shutDown(tester, shopDb);
+    });
+
+    testWidgets('without internet the phone copy still stands', (tester) async {
+      await openBackup(
+        tester,
+        withKey: true,
+        driveOn: true,
+        more: driveOverrides(),
+      );
+      drive.offline = true;
+      await tapNoSettle(tester, 'backup-now');
+      await backupListed(tester);
+      expect(backupCount(), 1);
+      expect(drive.files, isEmpty);
+      expect(
+        find.textContaining('copy to Google Drive failed'),
+        findsOneWidget,
+      );
+      await shutDown(tester, shopDb);
+    });
+
+    testWidgets('Drive off means nothing is uploaded', (tester) async {
+      await openBackup(tester, withKey: true, more: driveOverrides());
+      await tapNoSettle(tester, 'backup-now');
+      await backupListed(tester);
+      expect(drive.files, isEmpty);
+      await shutDown(tester, shopDb);
+    });
+
+    testWidgets('automatic backups are copied too', (tester) async {
+      await openBackup(
+        tester,
+        route: AppRoutes.home,
+        withKey: true,
+        autoOff: false,
+        driveOn: true,
+        more: driveOverrides(),
+      );
+      await settleIo(tester, until: () => drive.files.isNotEmpty);
+      expect(drive.files, hasLength(1));
+      await shutDown(tester, shopDb);
+    });
+
+    testWidgets('restore from Drive: pick a backup, passphrase, done', (
+      tester,
+    ) async {
+      await openBackup(tester, more: driveOverrides());
+      late Phone oldPhone;
+      await tester.runAsync(() async {
+        oldPhone = await Phone.create(keyChar: 'a');
+        await oldPhone.seed();
+        final service = oldPhone.service();
+        await service.setPassphrase(passphrase);
+        final made = await service.createBackup();
+        await drive.store(auth).upload(made.file);
+      });
+      addTearDown(() async => oldPhone.dispose());
+      expect(drive.files, hasLength(1));
+
+      await tapKeyed(tester, 'drive-restore');
+      await settleIo(
+        tester,
+        until: () =>
+            find.byKey(const ValueKey('drive-backup-0')).evaluate().isNotEmpty,
+      );
+      await tester.tap(find.byKey(const ValueKey('drive-backup-0')));
+      await settleIo(
+        tester,
+        until: () => find
+            .byKey(const ValueKey('restore-passphrase'))
+            .evaluate()
+            .isNotEmpty,
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('restore-passphrase')),
+        passphrase,
+      );
+      await tester.tap(find.byKey(const ValueKey('restore-passphrase-ok')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('restore-confirm')));
+      await tester.pump();
+      await settleIo(
+        tester,
+        until: () =>
+            find.byKey(const ValueKey('restore-done')).evaluate().isNotEmpty,
+      );
+      expect(find.textContaining('Restored 2 customers'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('restore-done')));
+      await tester.pumpAndSettle();
+      expect(restarts, 1);
+      await shutDown(tester, shopDb);
+    });
+
+    testWidgets('restore from an empty Drive says so', (tester) async {
+      await openBackup(tester, more: driveOverrides());
+      await tapKeyed(tester, 'drive-restore');
+      await settleIo(
+        tester,
+        until: () =>
+            find.text('No backups in Google Drive yet').evaluate().isNotEmpty,
+      );
+      expect(find.text('No backups in Google Drive yet'), findsOneWidget);
+      await shutDown(tester, shopDb);
+    });
+
+    testWidgets('restore from Drive without internet', (tester) async {
+      await openBackup(tester, more: driveOverrides());
+      drive.offline = true;
+      await tapKeyed(tester, 'drive-restore');
+      await settleIo(
+        tester,
+        until: () => find
+            .textContaining('Could not reach Google Drive')
+            .evaluate()
+            .isNotEmpty,
+      );
+      expect(
+        find.textContaining('Could not reach Google Drive'),
+        findsOneWidget,
+      );
+      expect(restarts, 0);
       await shutDown(tester, shopDb);
     });
   });

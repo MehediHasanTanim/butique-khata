@@ -7,7 +7,10 @@ import 'package:tailor_khata/app/providers.dart';
 import 'package:tailor_khata/core/backup/backup_crypto.dart';
 import 'package:tailor_khata/features/backup/data/backup_key_store.dart';
 import 'package:tailor_khata/features/backup/data/backup_service.dart';
+import 'package:tailor_khata/features/backup/data/drive_auth.dart';
+import 'package:tailor_khata/features/backup/data/drive_backup_store.dart';
 import 'package:tailor_khata/features/backup/domain/backup_models.dart';
+import 'package:tailor_khata/features/settings/data/settings_repository.dart';
 
 /// Where this phone keeps its files. Set in `bootstrap`; left null in tests
 /// that do not exercise backups, which turns every backup feature off.
@@ -129,4 +132,46 @@ String generatePassphrase([Random? random]) {
   String group() =>
       List.generate(4, (_) => alphabet[rng.nextInt(alphabet.length)]).join();
   return List.generate(5, (_) => group()).join('-');
+}
+
+// ---- Google Drive copy (S6-02) ----------------------------------------------
+
+final driveAuthProvider = Provider<DriveAuth>((ref) => GoogleDriveAuth());
+
+final driveStoreProvider = Provider<DriveBackupStore>(
+  (ref) => DriveBackupStore(ref.watch(driveAuthProvider)),
+);
+
+/// Setting key: copy every backup to Drive too.
+const String driveEnabledKey = 'backup.drive';
+
+final driveEnabledProvider = FutureProvider.autoDispose<bool>((ref) async {
+  ref.watch(backupRevisionProvider);
+  return (await ref.watch(settingsRepositoryProvider).read(driveEnabledKey)) ==
+      'true';
+});
+
+final driveEmailProvider = FutureProvider.autoDispose<String?>((ref) async {
+  ref.watch(backupRevisionProvider);
+  if (!(await ref.watch(driveEnabledProvider.future))) return null;
+  return ref.watch(driveAuthProvider).email();
+});
+
+/// Copies [file] to Drive when the person turned that on. Never throws: a
+/// backup that exists on the phone must not be reported as failed because the
+/// internet was down. Returns whether the copy reached Drive (null if Drive
+/// is off).
+Future<bool?> copyToDriveIfEnabled({
+  required SettingsRepository settings,
+  required DriveBackupStore store,
+  required File file,
+}) async {
+  if ((await settings.read(driveEnabledKey)) != 'true') return null;
+  try {
+    await store.upload(file);
+    await store.prune();
+    return true;
+  } on DriveException {
+    return false;
+  }
 }
