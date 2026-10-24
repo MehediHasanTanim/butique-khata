@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tailor_khata/app/app.dart';
 import 'package:tailor_khata/app/providers.dart';
@@ -16,6 +17,7 @@ Widget appOn(
   String locale = 'en',
   String? start,
   TestEnv? env,
+  List<Override> extra = const [],
 }) {
   final e = env ?? TestEnv();
   return ProviderScope(
@@ -29,6 +31,7 @@ Widget appOn(
       fileSharerProvider.overrideWithValue(e.sharer),
       photoSourceProvider.overrideWithValue(e.photos),
       mediaStoreProvider.overrideWithValue(e.media),
+      ...extra,
     ],
     child: TailorKhataApp(
       router: start == null ? null : buildRouter(initialLocation: start),

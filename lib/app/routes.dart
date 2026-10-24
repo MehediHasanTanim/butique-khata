@@ -6,6 +6,9 @@ abstract class AppRoutes {
   static const rush = '/rush';
   static const more = '/more';
   static const seed = '/more/seed';
+  static const backup = '/more/backup';
+  static const security = '/more/security';
+  static const recentlyDeleted = '/more/deleted';
 
   static const customerNew = '/customer/new';
   static String customer(String id) => '/customer/$id';

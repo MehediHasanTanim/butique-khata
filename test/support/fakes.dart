@@ -12,6 +12,7 @@ import 'package:tailor_khata/core/services/notification_service.dart';
 import 'package:tailor_khata/core/services/photo_source.dart';
 import 'package:tailor_khata/core/time/clock.dart';
 import 'package:tailor_khata/features/deliveries/domain/reminder_planner.dart';
+import 'package:tailor_khata/features/security/data/device_auth.dart';
 import 'package:tailor_khata/features/settings/data/app_settings.dart';
 
 /// Records every schedule and lets a test simulate taps and permissions.
@@ -78,6 +79,13 @@ class FakeSharer implements FileSharer {
   }) async {
     shared.add((bytes: bytes, fileName: fileName));
   }
+
+  final List<String> sharedPaths = [];
+
+  @override
+  Future<void> shareExistingFile(String path, {String? text}) async {
+    sharedPaths.add(path);
+  }
 }
 
 /// Hands out generated pictures, or null to simulate cancelling.
@@ -138,5 +146,36 @@ class TestEnv {
 
   void dispose() {
     if (dir.existsSync()) dir.deleteSync(recursive: true);
+  }
+}
+
+/// Stands in for the phone's fingerprint / screen-lock prompt.
+class FakeDeviceAuth implements DeviceAuth {
+  FakeDeviceAuth({
+    this.biometrics = true,
+    this.deviceCredential = true,
+    this.succeeds = true,
+  });
+
+  bool biometrics;
+  bool deviceCredential;
+
+  /// Whether the next prompt is passed.
+  bool succeeds;
+  final List<({String reason, bool biometricOnly})> prompts = [];
+
+  @override
+  Future<bool> biometricsAvailable() async => biometrics;
+
+  @override
+  Future<bool> deviceCredentialAvailable() async => deviceCredential;
+
+  @override
+  Future<bool> authenticate({
+    required String reason,
+    bool biometricOnly = false,
+  }) async {
+    prompts.add((reason: reason, biometricOnly: biometricOnly));
+    return succeeds;
   }
 }

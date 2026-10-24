@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tailor_khata/app/providers.dart';
 import 'package:tailor_khata/core/ids/id_generator.dart';
+import 'package:tailor_khata/features/customers/data/deleted_customers.dart';
 import 'package:tailor_khata/features/customers/data/drift_customer_repository.dart';
 import 'package:tailor_khata/features/customers/domain/customer.dart';
 import 'package:tailor_khata/features/customers/domain/customer_repository.dart';
@@ -50,3 +51,12 @@ final customerListProvider = StreamProvider.autoDispose<List<Customer>>((ref) {
 final customerProvider = StreamProvider.autoDispose.family<Customer?, String>(
   (ref, id) => ref.watch(customerRepositoryProvider).watchById(id),
 );
+
+final deletedCustomerRepositoryProvider = Provider<DeletedCustomerRepository>(
+  (ref) => DeletedCustomerRepository(ref.watch(appDatabaseProvider)),
+);
+
+final deletedCustomersProvider =
+    StreamProvider.autoDispose<List<DeletedCustomer>>(
+      (ref) => ref.watch(deletedCustomerRepositoryProvider).watchDeleted(),
+    );

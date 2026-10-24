@@ -8,6 +8,7 @@ import 'package:tailor_khata/core/money/money.dart';
 import 'package:tailor_khata/core/ui/app_theme.dart';
 import 'package:tailor_khata/core/ui/money_text.dart';
 import 'package:tailor_khata/core/ui/section_header.dart';
+import 'package:tailor_khata/features/backup/presentation/backup_banner.dart';
 import 'package:tailor_khata/features/orders/domain/delivery.dart';
 import 'package:tailor_khata/features/orders/domain/order.dart';
 import 'package:tailor_khata/features/orders/presentation/order_providers.dart';
@@ -57,6 +58,7 @@ class HomeScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.only(bottom: 32),
         children: [
+          const BackupBanner(),
           Padding(
             padding: const EdgeInsets.all(12),
             child: GridView(

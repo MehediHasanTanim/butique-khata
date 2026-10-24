@@ -13,6 +13,10 @@ abstract class FileSharer {
     required String fileName,
     String? text,
   });
+
+  /// Shares a file that already exists on disk (a backup, for instance)
+  /// without reading it into memory.
+  Future<void> shareExistingFile(String path, {String? text});
 }
 
 class SharePlusFileSharer implements FileSharer {
@@ -31,4 +35,8 @@ class SharePlusFileSharer implements FileSharer {
       ShareParams(files: [XFile(file.path)], text: text),
     );
   }
+
+  @override
+  Future<void> shareExistingFile(String path, {String? text}) =>
+      SharePlus.instance.share(ShareParams(files: [XFile(path)], text: text));
 }

@@ -156,11 +156,19 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                   ? l10n.notificationsAllowed
                   : l10n.notificationsBlocked,
             ),
-            trailing: _allowed == false
-                ? FilledButton(
-                    key: const ValueKey('permission-allow'),
-                    onPressed: _requestPermission,
-                    child: Text(l10n.notificationsAllow),
+            // Under the text, not beside it: a button with a long (Bangla or
+            // large-text) label would otherwise fill the whole row.
+            subtitle: _allowed == false
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: FilledButton(
+                        key: const ValueKey('permission-allow'),
+                        onPressed: _requestPermission,
+                        child: Text(l10n.notificationsAllow),
+                      ),
+                    ),
                   )
                 : null,
           ),

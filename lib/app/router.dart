@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tailor_khata/app/home_shell.dart';
 import 'package:tailor_khata/app/routes.dart';
+import 'package:tailor_khata/features/backup/presentation/backup_screen.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_form_screen.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_list_screen.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_picker_screen.dart';
 import 'package:tailor_khata/features/customers/presentation/customer_profile_screen.dart';
 import 'package:tailor_khata/features/customers/presentation/global_search_screen.dart';
+import 'package:tailor_khata/features/customers/presentation/recently_deleted_screen.dart';
 import 'package:tailor_khata/features/deliveries/presentation/deliveries_screen.dart';
 import 'package:tailor_khata/features/deliveries/presentation/home_screen.dart';
 import 'package:tailor_khata/features/dev/seed_screen.dart';
@@ -23,6 +25,7 @@ import 'package:tailor_khata/features/rush/presentation/load_calendar_screen.dar
 import 'package:tailor_khata/features/rush/presentation/rush_list_screen.dart';
 import 'package:tailor_khata/features/rush/presentation/rush_screen.dart';
 import 'package:tailor_khata/features/rush/presentation/season_setup_screen.dart';
+import 'package:tailor_khata/features/security/presentation/security_screen.dart';
 import 'package:tailor_khata/features/settings/presentation/messages_screen.dart';
 import 'package:tailor_khata/features/settings/presentation/more_screen.dart';
 import 'package:tailor_khata/features/settings/presentation/reminders_screen.dart';
@@ -109,6 +112,21 @@ GoRouter buildRouter({String initialLocation = AppRoutes.home}) => GoRouter(
               CuttingSlipScreen(orderId: state.pathParameters['id']!),
         ),
       ],
+    ),
+    GoRoute(
+      path: AppRoutes.backup,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const BackupScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.security,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const SecurityScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.recentlyDeleted,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const RecentlyDeletedScreen(),
     ),
     GoRoute(
       path: AppRoutes.settingsReminders,

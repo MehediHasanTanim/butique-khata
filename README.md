@@ -13,6 +13,7 @@ Docs: [feature spec](docs/feature-spec.md) · [technical design](docs/technical-
 | S3 Orders + payments | Done, including photo attachments and the cutting slip (shared as a picture, not a PDF): order wizard, status pipeline, advance/due, payments, cancel, duplicate, dues list |
 | S5 Eid-rush | Done (P0): season setup, capacity engine, countdown board, load calendar, safe-date suggestion in the order wizard, batch lists, rush list. P1 items (production board, at-risk list, rush-day cash summary) and the tailor usability session are left for v1.1 |
 | S4 Deliveries, reminders, dashboard | Done: dashboard, delivery tabs, guarded delivery, customer messages (SMS/WhatsApp), local reminders, filters and search |
+| S6 Backup, security, hardening | Done except Google Drive upload (S6-02), scheduled background backup (S6-03) and beta distribution (S6-11); see notes below. Encrypted backup and restore, app lock, recently-deleted recovery, CSV export, query-plan and performance checks, accessibility and translation audit |
 | S2 Measurement history | Done except S2-10 (PDF/image export) and S2-12 (tailor usability session): timeline, compare, trend, error flag, fit result, change prompts |
 
 ## Setup
@@ -60,6 +61,8 @@ test/
 - **Encryption:** the database uses SQLCipher through `package:sqlite3`'s hook (`hooks.user_defines.sqlite3.source: sqlcipher` in `pubspec.yaml`). The 256-bit key is generated on first run and kept in the Android Keystore / iOS Keychain. The app refuses to open if SQLCipher is not linked, so data can never be silently stored unencrypted.
 - **Lengths** are integers in 0.1 mm units (1 inch = 254), **money** is integer poisha. No floats for stored values.
 - **Bangla digits** are applied only at display time; storage and parsing use ASCII.
+- **Backups** are one `.tkbackup` file: a small custom bundle (manifest, database snapshot, photos) encrypted in 1 MiB chunks with AES-256-GCM under a key from the backup passphrase (Argon2id). The database snapshot is exported already encrypted with that key (SQLCipher `sqlcipher_export`), so no readable copy of the data is ever written to disk. Only the derived key is kept on the phone (in the Keystore/Keychain), never the passphrase; restoring on another phone needs the passphrase typed in. A restore decrypts, checks every checksum and the schema version, opens the result with the current migrations and compares row counts, and only then swaps it in (the old database is kept for 7 days as `pre_restore_*.db`). A wrong passphrase or a damaged file changes nothing.
+- **App lock:** the PIN is stored as a salted PBKDF2-HMAC-SHA256 hash in the Keystore/Keychain (not in the database it protects). Five wrong PINs start a lockout (30 s, doubling to 15 min) that survives closing the app. Forgot the PIN: the phone's own screen lock confirms ownership and removes the lock; the data is never touched.
 - A startup failure (e.g. wrong key) shows an error screen and never deletes data.
 
 ## What works today
@@ -81,3 +84,15 @@ test/
 ## Debug tools
 
 In debug builds, **More → Developer tools** generates synthetic Bangla/English customers (100 / 1,000 / 10,000), saves them to the database and can remove them again.
+
+- Backup and restore (More → Backup & restore): set a passphrase once (or let the app make one), then "Back up now" or leave automatic backup on (once a day, when the app opens or returns to the foreground; the newest five automatic files are kept). Each file can be shared to WhatsApp, Drive or a computer. Home warns when there has been no backup for a week. Restore picks a `.tkbackup` file from anywhere, asks for the passphrase and a final confirmation, and restarts the app on the restored data.
+- App lock (More → App lock): PIN, optional fingerprint/face, lock after leaving the app immediately or after 1, 5 or 15 minutes.
+- Recently deleted (More): deleted customers can be brought back. A customer with no measurements, orders or photos is removed for good after 30 days; one with any history is kept until restored.
+- Export (More → Export to spreadsheet): a zip of `customers.csv`, `orders.csv`, `payments.csv` and `measurements.csv` (UTF-8 with a byte-order mark so Excel shows Bangla; cells that could run as spreadsheet formulas are defused), shared through the system share sheet.
+
+### Sprint 6 notes
+
+- **Google Drive (S6-02) is not built.** It needs a Google Cloud project, OAuth consent and the app's signing certificate, which cannot be set up from the repository. The backup file can be shared to Drive (or anywhere) from the share sheet and restored from any file picker, which covers the "local-file fallback" the plan allows.
+- **Scheduled backup (S6-03) is opportunistic**, not WorkManager: it runs when the app opens or returns to the foreground and the last backup is over a day old. A phone that is never opened is not backed up, which the Home warning makes visible.
+- **S6-11 (beta distribution, crash reporting, feedback form)** is not done; it needs a Play Console track and a reporting backend.
+- Performance and query-plan checks run on a desktop SQLite with 10,000 customers and 50,000 orders (`test/core/query_plan_test.dart`). The reference-device cold-start and frame-time measurements still need a real phone, as does the backup, wipe, restore round trip on hardware.

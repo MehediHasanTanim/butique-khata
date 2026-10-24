@@ -880,5 +880,148 @@
     }
   },
   "dateFullTake": "Take it anyway",
-  "overbookedBadge": "Over capacity"
+  "overbookedBadge": "Over capacity",
+  "settingsSecurityData": "Data & security",
+  "backupTitle": "Backup & restore",
+  "backupSubtitle": "Keep your book safe",
+  "backupLastAt": "Last backup: {date}",
+  "@backupLastAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNever": "Not backed up yet",
+  "backupExplain": "A backup is one file, locked with your passphrase. Without the passphrase nobody can open it, not even us.",
+  "backupSetupTitle": "Set a backup passphrase",
+  "backupSetupAction": "Set passphrase",
+  "backupPassphrase": "Passphrase",
+  "backupPassphraseConfirm": "Type it again",
+  "backupPassphraseHint": "At least 8 characters",
+  "backupPassphraseGenerate": "Make one for me",
+  "backupPassphraseWarn": "Write it down and keep it safe. If you forget it, your backups can never be opened.",
+  "backupPassphraseShort": "Use at least 8 characters",
+  "backupPassphraseMismatch": "The two do not match",
+  "backupChangePassphrase": "Change passphrase",
+  "backupNow": "Back up now",
+  "backupWorking": "Backing up…",
+  "backupDone": "Backup saved ({size})",
+  "@backupDone": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "backupShare": "Save a copy elsewhere",
+  "backupAuto": "Back up automatically",
+  "backupAutoSubtitle": "Once a day, when you open the app",
+  "backupFilesTitle": "Backups on this phone",
+  "backupFilesEmpty": "No backups yet",
+  "backupRestoreTitle": "Restore from a backup file",
+  "backupRestoreSubtitle": "Replaces everything on this phone",
+  "backupRestoreConfirmTitle": "Replace all data on this phone?",
+  "backupRestoreConfirmBody": "Customers, measurements and orders on this phone will be replaced by the backup. A copy of the current data is kept for 7 days.",
+  "backupRestoreAction": "Restore",
+  "backupRestorePassphraseTitle": "Enter the backup passphrase",
+  "backupRestoring": "Restoring… please wait",
+  "backupRestored": "Restored {customers} customers and {measurements} measurements",
+  "@backupRestored": {
+    "placeholders": {
+      "customers": {
+        "type": "int"
+      },
+      "measurements": {
+        "type": "int"
+      }
+    }
+  },
+  "backupErrNoKey": "Set a backup passphrase first",
+  "backupErrNotBackup": "This is not a Tailor Khata backup",
+  "backupErrWrongPassphrase": "Wrong passphrase, or the file was changed. Nothing on this phone was touched.",
+  "backupErrCorrupt": "This backup is damaged or incomplete. Nothing on this phone was touched.",
+  "backupErrNewer": "This backup was made by a newer version of the app. Update the app first.",
+  "backupErrFailed": "Could not finish. Your data was not changed.",
+  "homeBackupNever": "Your data is not backed up yet",
+  "homeBackupStale": "{days, plural, =1{No backup for 1 day} other{No backup for {days} days}}",
+  "@homeBackupStale": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "homeBackupAction": "Back up",
+  "lockTitle": "Tailor Khata is locked",
+  "lockEnterPin": "Enter your PIN",
+  "lockWrongPin": "Wrong PIN",
+  "lockTryAgainIn": "Too many tries. Try again in {time}",
+  "@lockTryAgainIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "lockUseBiometric": "Use fingerprint or face",
+  "lockBiometricReason": "Unlock Tailor Khata",
+  "lockForgot": "Forgot PIN?",
+  "lockResetTitle": "Reset the PIN?",
+  "lockResetBody": "You will confirm with your phone's screen lock. Your data is not deleted.",
+  "lockResetFailed": "Could not confirm. The PIN was not changed.",
+  "lockResetNoDeviceLock": "This phone has no screen lock, so the PIN cannot be reset here.",
+  "securityTitle": "App lock",
+  "securitySubtitle": "Ask for a PIN when the app opens",
+  "securityEnable": "Lock the app with a PIN",
+  "securitySetPin": "Choose a PIN",
+  "securityPinHint": "4 to 8 digits",
+  "securityConfirmPin": "Type the PIN again",
+  "securityPinShort": "Use 4 to 8 digits",
+  "securityPinMismatch": "The two PINs do not match",
+  "securityPinSaved": "PIN saved",
+  "securityChangePin": "Change PIN",
+  "securityCurrentPin": "Current PIN",
+  "securityBiometric": "Use fingerprint or face",
+  "securityBiometricUnavailable": "Not set up on this phone",
+  "securityTimeout": "Lock after leaving the app",
+  "securityTimeoutNow": "Immediately",
+  "securityTimeoutMinutes": "{count, plural, =1{After 1 minute} other{After {count} minutes}}",
+  "@securityTimeoutMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "securityDisable": "Turn off app lock",
+  "securityDisableTitle": "Turn off app lock?",
+  "securityDisableBody": "Anyone who opens this phone can then see your book.",
+  "securityLockNow": "Lock now",
+  "deletedTitle": "Recently deleted",
+  "deletedSubtitle": "Bring back customers you removed",
+  "deletedEmpty": "Nothing deleted recently",
+  "deletedEmptyBody": "Customers you delete wait here for 30 days.",
+  "deletedRestore": "Restore",
+  "deletedRestored": "{name} restored",
+  "@deletedRestored": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deletedDaysLeft": "{days, plural, =0{Removed today} =1{1 day left} other{{days} days left}}",
+  "@deletedDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "deletedKeptHistory": "Has history, kept until you restore it",
+  "exportTitle": "Export to spreadsheet",
+  "exportSubtitle": "Customers, orders, payments and measurements as CSV",
+  "exportWorking": "Preparing the files…",
+  "exportFailed": "Could not export. Please try again."
 }

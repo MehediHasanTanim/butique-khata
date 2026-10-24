@@ -90,8 +90,11 @@ class DriftRushRepository implements RushRepository {
         const SeasonCompanion(active: Value(false)),
       );
 
+  // An IN list (not `!= 'delivered'`) lets SQLite use the status index and
+  // skip the years of delivered history.
   static const String _open =
-      "o.deleted_at IS NULL AND o.cancelled_at IS NULL AND i.status != 'delivered'";
+      'o.deleted_at IS NULL AND o.cancelled_at IS NULL AND '
+      "i.status IN ('received', 'cut', 'stitching', 'finishing', 'ready')";
 
   @override
   Stream<List<RushItem>> watchOpenItems() => _db

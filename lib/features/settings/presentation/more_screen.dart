@@ -6,6 +6,7 @@ import 'package:tailor_khata/app/providers.dart';
 import 'package:tailor_khata/app/routes.dart';
 import 'package:tailor_khata/core/ui/app_list_tile.dart';
 import 'package:tailor_khata/core/ui/section_header.dart';
+import 'package:tailor_khata/features/export/presentation/export_tile.dart';
 import 'package:tailor_khata/l10n/gen/app_localizations.dart';
 
 class MoreScreen extends ConsumerWidget {
@@ -46,6 +47,29 @@ class MoreScreen extends ConsumerWidget {
             leading: const Icon(Icons.message_outlined),
             onTap: () => context.push(AppRoutes.settingsMessages),
           ),
+          SectionHeader(l10n.settingsSecurityData),
+          AppListTile(
+            key: const ValueKey('more-backup'),
+            title: l10n.backupTitle,
+            subtitle: l10n.backupSubtitle,
+            leading: const Icon(Icons.backup_outlined),
+            onTap: () => context.push(AppRoutes.backup),
+          ),
+          AppListTile(
+            key: const ValueKey('more-security'),
+            title: l10n.securityTitle,
+            subtitle: l10n.securitySubtitle,
+            leading: const Icon(Icons.lock_outline),
+            onTap: () => context.push(AppRoutes.security),
+          ),
+          AppListTile(
+            key: const ValueKey('more-deleted'),
+            title: l10n.deletedTitle,
+            subtitle: l10n.deletedSubtitle,
+            leading: const Icon(Icons.delete_sweep_outlined),
+            onTap: () => context.push(AppRoutes.recentlyDeleted),
+          ),
+          const ExportTile(),
           if (kDebugMode) ...[
             SectionHeader(l10n.settingsDeveloper),
             AppListTile(

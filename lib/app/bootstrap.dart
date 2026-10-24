@@ -1,12 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:tailor_khata/app/app.dart';
 import 'package:tailor_khata/app/error_boundary.dart';
 import 'package:tailor_khata/app/providers.dart';
 import 'package:tailor_khata/app/services.dart';
-import 'package:tailor_khata/core/db/app_database.dart';
 import 'package:tailor_khata/core/db/database_opener.dart';
 import 'package:tailor_khata/core/errors/result.dart';
 import 'package:tailor_khata/core/logging/app_log.dart';
@@ -15,6 +18,9 @@ import 'package:tailor_khata/core/services/notification_service.dart';
 import 'package:tailor_khata/core/ui/app_theme.dart';
 import 'package:tailor_khata/core/ui/empty_state.dart';
 import 'package:tailor_khata/core/ui/primary_button.dart';
+import 'package:tailor_khata/features/backup/presentation/backup_providers.dart';
+import 'package:tailor_khata/features/security/data/lock_store.dart';
+import 'package:tailor_khata/features/security/presentation/lock_controller.dart';
 import 'package:tailor_khata/features/settings/data/app_settings.dart';
 import 'package:tailor_khata/features/settings/data/settings_repository.dart';
 import 'package:tailor_khata/l10n/gen/app_localizations.dart';
@@ -33,15 +39,34 @@ Future<void> _launch(Flavor flavor) async {
   // Date names for every locale, available before any widget builds.
   await initializeDateFormatting();
   try {
-    final db = await _openDatabase();
+    final key = await SecureDatabaseKeyStore().loadOrCreateKey();
+    final dbFile = await DatabaseOpener.defaultFile();
+    final db = await DatabaseOpener.open(dbFile, hexKey: key);
     final settings = SettingsRepository(db);
     final saved = await settings.read(SettingKeys.locale);
     final appSettings = await AppSettings.load(settings);
     final media = await FileMediaStore.inAppSupport();
     final notifications = await _startNotifications();
+    final lockStore = SecureLockStore();
+    final lockConfig = await lockStore.load();
+    final supportDir = await getApplicationSupportDirectory();
+    final documentsDir = await getApplicationDocumentsDirectory();
     runApp(
       ProviderScope(
+        // A new key makes a restart (after a restore) build a fresh tree.
+        key: UniqueKey(),
         overrides: [
+          backupEnvironmentProvider.overrideWithValue(
+            BackupEnvironment(
+              backupDir: Directory(p.join(documentsDir.path, 'backups')),
+              mediaDir: Directory(p.join(supportDir.path, 'media')),
+              dbFile: dbFile,
+              deviceKeyHex: key,
+            ),
+          ),
+          appRestartProvider.overrideWithValue(() => _launch(flavor)),
+          lockStoreProvider.overrideWithValue(lockStore),
+          initialLockConfigProvider.overrideWithValue(lockConfig),
           appDatabaseProvider.overrideWithValue(db),
           initialAppSettingsProvider.overrideWithValue(appSettings),
           mediaStoreProvider.overrideWithValue(media),
@@ -68,12 +93,6 @@ Future<NotificationService> _startNotifications() async {
     AppLog.e('boot', 'Notifications unavailable', error);
     return NoopNotificationService();
   }
-}
-
-Future<AppDatabase> _openDatabase() async {
-  final key = await SecureDatabaseKeyStore().loadOrCreateKey();
-  final file = await DatabaseOpener.defaultFile();
-  return DatabaseOpener.open(file, hexKey: key);
 }
 
 /// Shown instead of the app when the database cannot be opened. Never

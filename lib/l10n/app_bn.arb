@@ -421,5 +421,148 @@
   "dateFullTitle": "এই তারিখ আগেই ভরে গেছে",
   "dateFullBody": "{season}-এর কাজ এই তারিখ পর্যন্ত ভরে গেছে। তবুও অর্ডার নেবেন?",
   "dateFullTake": "তবুও নিন",
-  "overbookedBadge": "ক্ষমতার বেশি"
+  "overbookedBadge": "ক্ষমতার বেশি",
+  "settingsSecurityData": "ডেটা ও নিরাপত্তা",
+  "backupTitle": "ব্যাকআপ ও রিস্টোর",
+  "backupSubtitle": "আপনার খাতা নিরাপদ রাখুন",
+  "backupLastAt": "সর্বশেষ ব্যাকআপ: {date}",
+  "@backupLastAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNever": "এখনও ব্যাকআপ নেওয়া হয়নি",
+  "backupExplain": "ব্যাকআপ একটি ফাইল, আপনার পাসফ্রেজ দিয়ে তালাবদ্ধ। পাসফ্রেজ ছাড়া কেউ খুলতে পারবে না, আমরাও না।",
+  "backupSetupTitle": "ব্যাকআপ পাসফ্রেজ ঠিক করুন",
+  "backupSetupAction": "পাসফ্রেজ ঠিক করুন",
+  "backupPassphrase": "পাসফ্রেজ",
+  "backupPassphraseConfirm": "আবার লিখুন",
+  "backupPassphraseHint": "কমপক্ষে ৮টি অক্ষর",
+  "backupPassphraseGenerate": "আমার জন্য বানিয়ে দিন",
+  "backupPassphraseWarn": "লিখে নিরাপদ জায়গায় রাখুন। ভুলে গেলে ব্যাকআপ আর কখনো খোলা যাবে না।",
+  "backupPassphraseShort": "কমপক্ষে ৮টি অক্ষর দিন",
+  "backupPassphraseMismatch": "দুটি মিলছে না",
+  "backupChangePassphrase": "পাসফ্রেজ বদলান",
+  "backupNow": "এখনই ব্যাকআপ নিন",
+  "backupWorking": "ব্যাকআপ হচ্ছে…",
+  "backupDone": "ব্যাকআপ সংরক্ষিত ({size})",
+  "@backupDone": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "backupShare": "অন্য জায়গায় কপি রাখুন",
+  "backupAuto": "নিজে থেকে ব্যাকআপ নিন",
+  "backupAutoSubtitle": "দিনে একবার, অ্যাপ খুললে",
+  "backupFilesTitle": "এই ফোনের ব্যাকআপ",
+  "backupFilesEmpty": "এখনও কোনো ব্যাকআপ নেই",
+  "backupRestoreTitle": "ব্যাকআপ ফাইল থেকে রিস্টোর",
+  "backupRestoreSubtitle": "এই ফোনের সব কিছু বদলে যাবে",
+  "backupRestoreConfirmTitle": "এই ফোনের সব ডেটা বদলাবেন?",
+  "backupRestoreConfirmBody": "এই ফোনের কাস্টমার, মাপ ও অর্ডার ব্যাকআপের ডেটা দিয়ে বদলে যাবে। বর্তমান ডেটার একটি কপি ৭ দিন রাখা হবে।",
+  "backupRestoreAction": "রিস্টোর করুন",
+  "backupRestorePassphraseTitle": "ব্যাকআপের পাসফ্রেজ দিন",
+  "backupRestoring": "রিস্টোর হচ্ছে… একটু অপেক্ষা করুন",
+  "backupRestored": "{customers} জন কাস্টমার ও {measurements}টি মাপ ফিরে এসেছে",
+  "@backupRestored": {
+    "placeholders": {
+      "customers": {
+        "type": "int"
+      },
+      "measurements": {
+        "type": "int"
+      }
+    }
+  },
+  "backupErrNoKey": "আগে ব্যাকআপ পাসফ্রেজ ঠিক করুন",
+  "backupErrNotBackup": "এটি টেইলর খাতার ব্যাকআপ নয়",
+  "backupErrWrongPassphrase": "পাসফ্রেজ ভুল, অথবা ফাইল বদলে গেছে। এই ফোনের কিছুই বদলায়নি।",
+  "backupErrCorrupt": "ব্যাকআপটি নষ্ট বা অসম্পূর্ণ। এই ফোনের কিছুই বদলায়নি।",
+  "backupErrNewer": "ব্যাকআপটি অ্যাপের নতুন সংস্করণে তৈরি। আগে অ্যাপ আপডেট করুন।",
+  "backupErrFailed": "শেষ করা যায়নি। আপনার ডেটা বদলায়নি।",
+  "homeBackupNever": "আপনার ডেটার ব্যাকআপ এখনও নেওয়া হয়নি",
+  "homeBackupStale": "{days, plural, other{{days} দিন ব্যাকআপ নেওয়া হয়নি}}",
+  "@homeBackupStale": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "homeBackupAction": "ব্যাকআপ",
+  "lockTitle": "টেইলর খাতা তালাবদ্ধ",
+  "lockEnterPin": "আপনার পিন দিন",
+  "lockWrongPin": "ভুল পিন",
+  "lockTryAgainIn": "অনেকবার ভুল হয়েছে। {time} পরে আবার চেষ্টা করুন",
+  "@lockTryAgainIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "lockUseBiometric": "আঙুলের ছাপ বা মুখ ব্যবহার করুন",
+  "lockBiometricReason": "টেইলর খাতা খুলুন",
+  "lockForgot": "পিন ভুলে গেছেন?",
+  "lockResetTitle": "পিন নতুন করবেন?",
+  "lockResetBody": "ফোনের স্ক্রিন লক দিয়ে নিশ্চিত করতে হবে। আপনার ডেটা মুছবে না।",
+  "lockResetFailed": "নিশ্চিত করা যায়নি। পিন বদলায়নি।",
+  "lockResetNoDeviceLock": "এই ফোনে স্ক্রিন লক নেই, তাই এখানে পিন নতুন করা যাবে না।",
+  "securityTitle": "অ্যাপ লক",
+  "securitySubtitle": "অ্যাপ খুললে পিন চাইবে",
+  "securityEnable": "পিন দিয়ে অ্যাপ লক করুন",
+  "securitySetPin": "একটি পিন বেছে নিন",
+  "securityPinHint": "৪ থেকে ৮টি অঙ্ক",
+  "securityConfirmPin": "পিনটি আবার লিখুন",
+  "securityPinShort": "৪ থেকে ৮টি অঙ্ক দিন",
+  "securityPinMismatch": "দুটি পিন মিলছে না",
+  "securityPinSaved": "পিন সংরক্ষিত",
+  "securityChangePin": "পিন বদলান",
+  "securityCurrentPin": "বর্তমান পিন",
+  "securityBiometric": "আঙুলের ছাপ বা মুখ ব্যবহার করুন",
+  "securityBiometricUnavailable": "এই ফোনে চালু করা নেই",
+  "securityTimeout": "অ্যাপ ছাড়ার পর লক হবে",
+  "securityTimeoutNow": "সাথে সাথে",
+  "securityTimeoutMinutes": "{count, plural, other{{count} মিনিট পরে}}",
+  "@securityTimeoutMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "securityDisable": "অ্যাপ লক বন্ধ করুন",
+  "securityDisableTitle": "অ্যাপ লক বন্ধ করবেন?",
+  "securityDisableBody": "তখন যে কেউ ফোন খুললেই আপনার খাতা দেখতে পারবে।",
+  "securityLockNow": "এখনই লক করুন",
+  "deletedTitle": "সম্প্রতি মোছা",
+  "deletedSubtitle": "মুছে ফেলা কাস্টমার ফিরিয়ে আনুন",
+  "deletedEmpty": "সম্প্রতি কিছু মোছা হয়নি",
+  "deletedEmptyBody": "মুছে ফেলা কাস্টমার এখানে ৩০ দিন থাকে।",
+  "deletedRestore": "ফিরিয়ে আনুন",
+  "deletedRestored": "{name} ফিরে এসেছে",
+  "@deletedRestored": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deletedDaysLeft": "{days, plural, =0{আজ মুছে যাবে} other{আর {days} দিন}}",
+  "@deletedDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "deletedKeptHistory": "ইতিহাস আছে, ফিরিয়ে না আনা পর্যন্ত থাকবে",
+  "exportTitle": "স্প্রেডশিটে এক্সপোর্ট",
+  "exportSubtitle": "কাস্টমার, অর্ডার, পেমেন্ট ও মাপ CSV হিসেবে",
+  "exportWorking": "ফাইল তৈরি হচ্ছে…",
+  "exportFailed": "এক্সপোর্ট করা যায়নি। আবার চেষ্টা করুন।"
 }

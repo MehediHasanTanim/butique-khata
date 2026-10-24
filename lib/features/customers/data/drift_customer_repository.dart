@@ -139,6 +139,10 @@ class DriftCustomerRepository implements CustomerRepository {
   @override
   Future<Customer?> findByPhone(String phone, {String? excludeId}) async {
     final query = _active..where((t) => t.phone.equals(phone));
+    // The digits column is indexed, the E.164 one is not: narrow by digits
+    // first so the duplicate check does not read every customer.
+    final digits = PhoneNormalizer.parse(phone)?.searchDigits;
+    if (digits != null) query.where((t) => t.phoneDigits.equals(digits));
     if (excludeId != null) query.where((t) => t.id.equals(excludeId).not());
     final row = await (query..limit(1)).getSingleOrNull();
     return row == null ? null : _toDomain(row);

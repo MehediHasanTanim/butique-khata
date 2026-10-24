@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tailor_khata/core/db/app_database.dart';
 import 'package:tailor_khata/core/ids/id_generator.dart';
@@ -113,6 +114,7 @@ Future<void> openShop(
   Future<void> Function()? extra,
   TestEnv? withEnv,
   void Function(TestEnv env)? configure,
+  List<Override> overrides = const [],
 }) async {
   phoneScreen(tester);
   clipboard = null;
@@ -134,7 +136,7 @@ Future<void> openShop(
     await extra?.call();
   });
   await tester.pumpWidget(
-    appOn(shopDb, start: route, locale: locale, env: env),
+    appOn(shopDb, start: route, locale: locale, env: env, extra: overrides),
   );
   await tester.pumpAndSettle();
   // Let the debounced reminder sync run once, as it does on a real start.
